@@ -434,10 +434,13 @@ class MPFITSVDSolver(MPFITSolver):
             raise MPFITSolverError("SVD solver requires quse_masks in ancillary_arrays")
 
         quse_masks = ancillary_arrays['quse_masks']
+        # Get n_vsites from ancillary_arrays (0 if not present, for backward compatibility)
+        n_vsites = ancillary_arrays.get('n_vsites', 0)
 
-        # Initialize charge values based on the design matrix dimensions
+        # Initialize charge values for atoms + vsites
         n_atoms = len(design_matrix)
-        charge_values = numpy.zeros((n_atoms, 1))
+        n_total = n_atoms + n_vsites
+        charge_values = numpy.zeros((n_total, 1))
 
         # Issue warning if constraint matrix doesn't match design matrix dimensions
         if constraint_matrix.shape[1] != n_atoms:
@@ -470,8 +473,10 @@ class MPFITSVDSolver(MPFITSolver):
             # Solve for charges using SVD
             q = (Vh.T * inv_S) @ (U.T @ site_b)
 
-            # Add the charges to the appropriate atoms using the quse_mask
-            # quse_mask should already be a boolean array from earlier conversion
+            # Add the charges to the appropriate positions using the quse_mask
+            # quse_mask has length n_atoms + n_vsites if vsites are present
             charge_values[quse_mask, 0] += q.flatten()
 
+        # Return all charges (atoms + vsites)
+        # Charge conservation: sum(atom_charges) + sum(vsite_charges) = molecular_charge
         return charge_values

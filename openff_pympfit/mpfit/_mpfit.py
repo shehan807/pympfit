@@ -19,6 +19,11 @@ from openff.recharge.utilities.toolkits import (
     get_atom_symmetries,
     molecule_to_tagged_smiles,
 )
+from openff.recharge.charges.vsite import (
+    VirtualSiteCollection,
+    VirtualSiteChargeKey,
+    VirtualSiteGeometryKey,
+)
 
 if TYPE_CHECKING:
     from openff.toolkit import Molecule
@@ -105,10 +110,14 @@ def molecule_to_mpfit_library_charge(
 
 
 def generate_mpfit_charge_parameter(
-    gdma_records: list[MoleculeGDMARecord], solver: MPFITSolver | None
-) -> LibraryChargeParameter:
+    gdma_records: list[MoleculeGDMARecord],
+    solver: MPFITSolver | None = None,
+    vsite_collection: VirtualSiteCollection | None = None,
+    vsite_charge_parameter_keys: list[VirtualSiteChargeKey] | None = None,
+    vsite_coordinate_parameter_keys: list[VirtualSiteGeometryKey] | None = None,
+) -> tuple[LibraryChargeParameter, numpy.ndarray | None]:
     """Generates a set of point charges that reproduce the distributed multipole
-    analysis data for a molecule.
+    analysis data for a molecule, optionally including virtual sites.
 
     Parameters
     ----------
@@ -116,11 +125,20 @@ def generate_mpfit_charge_parameter(
         The records containing the distributed multipole data.
     solver
         The solver to use when finding the charges that minimize the MPFIT loss function.
-        By default, the iterative solver is used.
+        By default, the SVD solver is used.
+    vsite_collection
+        Optional collection of virtual site parameters to include in the fitting.
+    vsite_charge_parameter_keys
+        Optional list of vsite charge parameter keys that are trainable.
+    vsite_coordinate_parameter_keys
+        Optional list of vsite coordinate parameter keys that are trainable.
 
     Returns
     -------
-        The charges generated for the molecule.
+        A tuple of:
+        - LibraryChargeParameter: The atom charges generated for the molecule.
+        - numpy.ndarray or None: The vsite charges if vsite_collection was provided,
+          shape (n_vsites,), or None if no vsites.
     """
 
     from openff.toolkit import Molecule
@@ -152,13 +170,17 @@ def generate_mpfit_charge_parameter(
             gdma_records,
             charge_collection=LibraryChargeCollection(parameters=[mpfit_parameter]),
             charge_parameter_keys=[(mpfit_parameter.smiles, tuple(range(len(mpfit_parameter.value))))],
+            vsite_collection=vsite_collection,
+            vsite_charge_parameter_keys=vsite_charge_parameter_keys,
+            vsite_coordinate_parameter_keys=vsite_coordinate_parameter_keys,
             return_quse_masks=True,
         )
     )
 
-    # Separate objective terms and quse_masks
+    # Separate objective terms, quse_masks, and n_vsites
     objective_terms = [term for term, _ in objective_terms_and_masks]
     quse_masks = [mask['quse_masks'] for _, mask in objective_terms_and_masks]
+    n_vsites = objective_terms_and_masks[0][1].get('n_vsites', 0) if objective_terms_and_masks else 0
 
     # Combine all the terms from different conformers
     combined_term = MPFITObjectiveTerm.combine(*objective_terms)
@@ -168,15 +190,30 @@ def generate_mpfit_charge_parameter(
         list(range(len(mpfit_parameter.value)))
     )
 
+    # Extend constraint matrix if vsites are present
+    # Vsite charges also contribute to total charge conservation
+    if n_vsites > 0:
+        # Add columns for vsites (they contribute to total charge)
+        vsite_constraint_cols = numpy.ones((constraint_matrix.shape[0], n_vsites))
+        constraint_matrix = numpy.hstack([constraint_matrix, vsite_constraint_cols])
+
     # Solve the fitting problem
     mpfit_charges = solver.solve(
         combined_term.atom_charge_design_matrix,
         combined_term.reference_values,
         constraint_matrix,
         constraint_vector,
-        ancillary_arrays={'quse_masks': quse_masks[0]}  # Using first mask set for now (multiple conformers not yet supported)
+        ancillary_arrays={
+            'quse_masks': quse_masks[0],  # Using first mask set for now
+            'n_vsites': n_vsites,
+        }
     )
 
-    mpfit_parameter.value = mpfit_charges.flatten().tolist()
+    # Split charges into atom and vsite portions
+    n_atoms = molecule.n_atoms
+    atom_charges = mpfit_charges[:n_atoms].flatten()
+    vsite_charges = mpfit_charges[n_atoms:].flatten() if n_vsites > 0 else None
 
-    return mpfit_parameter
+    mpfit_parameter.value = atom_charges.tolist()
+
+    return mpfit_parameter, vsite_charges
