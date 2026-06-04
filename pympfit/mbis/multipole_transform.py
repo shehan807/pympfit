@@ -489,8 +489,6 @@ def spherical_to_cartesian_multipoles(
         - quadrupoles: array of shape (N, 3, 3) or None if max_moment < 3
         - octupoles: array of shape (N, 3, 3, 3) or None if max_moment < 4
     """
-    n_atoms = multipoles.shape[0]
-
     # l=0: Monopole (charge)
     charges = multipoles[:, 0]
 
@@ -572,7 +570,7 @@ def cartesian_multipoles_to_flat(
     # max_moment=2: l=0,1 -> 1+3=4
     # max_moment=3: l=0,1,2 -> 1+3+6=10
     # max_moment=4: l=0,1,2,3 -> 1+3+6+10=20
-    n_components = sum((l + 1) * (l + 2) // 2 for l in range(max_moment))
+    n_components = sum((ell + 1) * (ell + 2) // 2 for ell in range(max_moment))
     multipoles = np.zeros((n_atoms, n_components))
 
     # l=0: Monopole (charge) - 1 component
@@ -607,7 +605,7 @@ def cartesian_multipoles_to_flat(
     if max_moment >= 4 and octupoles is not None:
         for i in range(n_atoms):
             o = octupoles[i]
-            multipoles[i, idx + 0] = o[0, 0, 0]  # xxx
+            multipoles[i, idx + 0] = o[0, 0, 0]  # T_xxx
             multipoles[i, idx + 1] = o[0, 0, 1]  # xxy
             multipoles[i, idx + 2] = o[0, 0, 2]  # xxz
             multipoles[i, idx + 3] = o[0, 1, 1]  # xyy
@@ -689,7 +687,7 @@ def flat_to_cartesian_multipoles(
     if max_moment >= 4:
         octupoles = np.zeros((n_atoms, 3, 3, 3))
         for i in range(n_atoms):
-            octupoles[i, 0, 0, 0] = multipoles[i, idx + 0]  # xxx
+            octupoles[i, 0, 0, 0] = multipoles[i, idx + 0]  # T_xxx
             xxy = multipoles[i, idx + 1]  # xxy
             xxz = multipoles[i, idx + 2]  # xxz
             xyy = multipoles[i, idx + 3]  # xyy
