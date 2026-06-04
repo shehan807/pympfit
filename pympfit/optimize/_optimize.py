@@ -106,6 +106,11 @@ class MPFITObjectiveTerm(ObjectiveTerm):
             max_rank = settings.limit  # GDMA uses 0-based indexing
         else:
             settings = record.mbis_settings
+            if settings.multipole_format == "cartesian":
+                raise NotImplementedError(
+                    "MPFIT against cartesian MBIS multipoles is not implemented. "
+                    "Construct MBISSettings with multipole_format='spherical'."
+                )
             max_rank = settings.limit - 1  # MBIS uses 1-based indexing
         r1 = settings.mpfit_inner_radius
         r2 = settings.mpfit_outer_radius
@@ -256,6 +261,11 @@ class MPFITObjective(Objective):
             settings = multipole_record.gdma_settings
         else:
             settings = multipole_record.mbis_settings
+            if settings.multipole_format == "cartesian":
+                raise NotImplementedError(
+                    "MPFIT against cartesian MBIS multipoles is not implemented. "
+                    "Construct MBISSettings with multipole_format='spherical'."
+                )
         bohr_conformer = unit.convert(
             multipole_record.conformer, unit.angstrom, unit.bohr
         )

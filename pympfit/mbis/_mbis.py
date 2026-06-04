@@ -123,7 +123,7 @@ class MBISGenerator(abc.ABC):
         compute_mp: bool,
         n_threads: int,
         memory: Quantity = 500 * unit.mebibytes,
-    ) -> tuple[Quantity, Quantity | None, Quantity | None]:
+    ) -> tuple[Quantity, Quantity | None]:
         """Implement the public ``generate`` function returning MBIS for conformer.
 
         Parameters

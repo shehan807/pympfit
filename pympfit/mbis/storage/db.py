@@ -92,11 +92,13 @@ class DBMBISSettings(_UniqueMixin, DBBase):
     dft_radial_points = Column(Integer, nullable=False)
     dft_spherical_points = Column(Integer, nullable=False)
     max_radial_moment = Column(Integer, nullable=False)
+    max_moment = Column(Integer, nullable=False)
     mbis_d_convergence = Column(Integer, nullable=False)
     mbis_radial_points = Column(Integer, nullable=False)
     mbis_spherical_points = Column(Integer, nullable=False)
     guess = Column(String, nullable=False)
     multipole_units = Column(String, nullable=False)
+    multipole_format = Column(String, nullable=False)
 
     # MPFIT specific parameters stored as integers
     mpfit_inner_radius = Column(Integer, nullable=False)
@@ -115,11 +117,13 @@ class DBMBISSettings(_UniqueMixin, DBBase):
                 instance.dft_radial_points,
                 instance.dft_spherical_points,
                 instance.max_radial_moment,
+                instance.max_moment,
                 instance.mbis_d_convergence,
                 instance.mbis_radial_points,
                 instance.mbis_spherical_points,
                 instance.guess,
                 instance.multipole_units,
+                instance.multipole_format,
             )
         )
 
@@ -137,6 +141,7 @@ class DBMBISSettings(_UniqueMixin, DBBase):
                 DBMBISSettings.dft_spherical_points == instance.dft_spherical_points
             )
             .filter(DBMBISSettings.max_radial_moment == instance.max_radial_moment)
+            .filter(DBMBISSettings.max_moment == instance.max_moment)
             .filter(DBMBISSettings.mbis_d_convergence == instance.mbis_d_convergence)
             .filter(DBMBISSettings.mbis_radial_points == instance.mbis_radial_points)
             .filter(
@@ -144,6 +149,7 @@ class DBMBISSettings(_UniqueMixin, DBBase):
             )
             .filter(DBMBISSettings.guess == instance.guess)
             .filter(DBMBISSettings.multipole_units == instance.multipole_units)
+            .filter(DBMBISSettings.multipole_format == instance.multipole_format)
         )
 
     @classmethod
@@ -157,11 +163,13 @@ class DBMBISSettings(_UniqueMixin, DBBase):
             dft_radial_points=instance.dft_radial_points,
             dft_spherical_points=instance.dft_spherical_points,
             max_radial_moment=instance.max_radial_moment,
+            max_moment=instance.max_moment,
             mbis_d_convergence=instance.mbis_d_convergence,
             mbis_radial_points=instance.mbis_radial_points,
             mbis_spherical_points=instance.mbis_spherical_points,
             guess=instance.guess,
             multipole_units=instance.multipole_units,
+            multipole_format=instance.multipole_format,
             mpfit_inner_radius=_float_to_db_int(instance.mpfit_inner_radius),
             mpfit_outer_radius=_float_to_db_int(instance.mpfit_outer_radius),
             mpfit_atom_radius=_float_to_db_int(instance.mpfit_atom_radius),
@@ -180,11 +188,13 @@ class DBMBISSettings(_UniqueMixin, DBBase):
             dft_radial_points=db_instance.dft_radial_points,
             dft_spherical_points=db_instance.dft_spherical_points,
             max_radial_moment=db_instance.max_radial_moment,
+            max_moment=db_instance.max_moment,
             mbis_d_convergence=db_instance.mbis_d_convergence,
             mbis_radial_points=db_instance.mbis_radial_points,
             mbis_spherical_points=db_instance.mbis_spherical_points,
             guess=db_instance.guess,
             multipole_units=db_instance.multipole_units,
+            multipole_format=db_instance.multipole_format,
             mpfit_inner_radius=_db_int_to_float(db_instance.mpfit_inner_radius),
             mpfit_outer_radius=_db_int_to_float(db_instance.mpfit_outer_radius),
             mpfit_atom_radius=_db_int_to_float(db_instance.mpfit_atom_radius),
