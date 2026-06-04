@@ -12,9 +12,12 @@ from openff.units.elements import SYMBOLS
 
 from pympfit import (
     GDMASettings,
+    MBISSettings,
     MoleculeGDMARecord,
+    MoleculeMBISRecord,
     MPFITSVDSolver,
     Psi4GDMAGenerator,
+    Psi4MBISGenerator,
     generate_mpfit_charge_parameter,
 )
 
@@ -62,16 +65,14 @@ print(f"  Total: {sum(parameter.value):+.4f}")
 #          MBIS Section            #
 ####################################
 
-from pympfit import (
-    MBISSettings,
-    MoleculeMBISRecord,
-    Psi4MBISGenerator,
-)
-
 # Settings
 settings = MBISSettings(
     method="pbe0",
     basis="def2-SVP",
+    max_moment=3,
+    max_radial_moment=4,
+    limit=3,
+    multipole_format="spherical",
     mbis_d_convergence=9.0,
     mbis_radial_points=99,
     mbis_spherical_points=590,
@@ -110,7 +111,8 @@ parameter = generate_mpfit_charge_parameter([record], solver)
 print("Fitted charges vs. MBIS charges:")
 for i, atom in enumerate(molecule.atoms):
     element = SYMBOLS[atom.atomic_number]
-    print(f"  {element}{i + 1:>2d}: {parameter.value[i]:+.4f} (MBIS: {multipoles[i, 0]:+.4f})")
+    print(
+        f"  {element}{i + 1:>2d}: {parameter.value[i]:+.4f} "
+        f"(MBIS: {multipoles[i, 0]:+.4f})"
+    )
 print(f"  Total: {sum(parameter.value):+.4f}")
-
-

@@ -117,9 +117,6 @@ mbis_settings = MBISSettings(
     max_radial_moment=4,  # Must be >= max_moment
     limit=3,  # Multipole expansion order for MPFIT (should match max_moment)
     multipole_format="spherical",  # "spherical" or "cartesian"
-    mpfit_inner_radius=6.78,
-    mpfit_outer_radius=12.45,
-    mpfit_atom_radius=3.0,
 )
 ```
 
