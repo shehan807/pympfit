@@ -218,7 +218,7 @@ the last contributing site $a^*$ (in index order), which absorbs the
 difference needed to match the reference total:
 
 $$
-q_i^{a^_} = q^{\text{total}}_{\mathcal{T}} - \sum_{a \neq a^_} q_i^a
+q_i^{a^*} = q^{\text{total}}_{\mathcal{T}} - \sum_{a \neq a^*} q_i^a
 $$ (eq:twin_constraint)
 
 The per-site charge distributions may differ between atoms in
