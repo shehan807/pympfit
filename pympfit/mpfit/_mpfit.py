@@ -486,8 +486,10 @@ def generate_constrained_mpfit_charge_parameter(
     first_record = multipole_records[0]
     if isinstance(first_record, MoleculeGDMARecord):
         settings = first_record.gdma_settings
+        max_rank = settings.limit  # GDMA uses 0-based indexing
     else:
         settings = first_record.mbis_settings
+        max_rank = settings.limit - 1  # MBIS uses 1-based indexing
 
     xyzcharge = np.vstack(all_xyz)
     xyzmult = np.vstack(all_xyz)
@@ -503,7 +505,7 @@ def generate_constrained_mpfit_charge_parameter(
         lmax=np.concatenate(all_lmax),
         r1=settings.mpfit_inner_radius,
         r2=settings.mpfit_outer_radius,
-        maxl=settings.limit,
+        maxl=max_rank,
         atom_counts=tuple(atom_counts),
         molecule_charges=mol_charges,
     )
