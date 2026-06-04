@@ -18,6 +18,7 @@ from pympfit import (
     MPFITSVDSolver,
     Psi4GDMAGenerator,
     Psi4MBISGenerator,
+    extract_mbis_charges,
     generate_mpfit_charge_parameter,
 )
 
@@ -95,24 +96,24 @@ coords, multipoles = Psi4MBISGenerator.generate(
 print(f"MBIS generation: {time.perf_counter() - t0:.2f}s")
 print()
 
-# Fit charges (SVD)
 record = MoleculeMBISRecord.from_molecule(molecule, coords, multipoles, settings)
 
-# NOTE: if you just want MBIS multipoles, you don't have to do the fitting step
-# below.
+# Direct path: raw Psi4-emitted MBIS partial charges (no fitting).
+mbis_parameter = extract_mbis_charges(record)
+print("MBIS charges (Q00):")
+for i, atom in enumerate(molecule.atoms):
+    element = SYMBOLS[atom.atomic_number]
+    print(f"  {element}{i + 1:>2d}: {mbis_parameter.value[i]:+.4f}")
+print(f"  Total: {sum(mbis_parameter.value):+.4f}")
 
-print("MBIS multipoles:")
-print(multipoles)
-
-# If you want to fit charges to the MBIS multipoles, do so here:
+# Optional: also refit point charges to all MBIS multipoles via MPFIT.
 solver = MPFITSVDSolver(svd_threshold=1e-4)
-parameter = generate_mpfit_charge_parameter([record], solver)
-
-print("Fitted charges vs. MBIS charges:")
+fitted_parameter = generate_mpfit_charge_parameter([record], solver)
+print("Refitted charges vs. raw MBIS:")
 for i, atom in enumerate(molecule.atoms):
     element = SYMBOLS[atom.atomic_number]
     print(
-        f"  {element}{i + 1:>2d}: {parameter.value[i]:+.4f} "
-        f"(MBIS: {multipoles[i, 0]:+.4f})"
+        f"  {element}{i + 1:>2d}: {fitted_parameter.value[i]:+.4f} "
+        f"(MBIS: {mbis_parameter.value[i]:+.4f})"
     )
-print(f"  Total: {sum(parameter.value):+.4f}")
+print(f"  Total: {sum(fitted_parameter.value):+.4f}")

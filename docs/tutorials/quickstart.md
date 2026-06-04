@@ -145,30 +145,45 @@ MBIS generation time: 28.45s
 Note: MBIS with `max_moment=3` produces 9 components per atom (charges, dipoles,
 and quadrupoles)
 
-## 7. Fit Charges from MBIS
+## 7. Obtain Charges from MBIS
 
-Create an MBIS record and fit partial charges using the same solver.
+Two paths are available:
+
+1. **Direct (recommended for raw MBIS):** `extract_mbis_charges()` returns the
+   Psi4-emitted MBIS partial charges (the Q00 column of the multipoles) wrapped
+   in a `LibraryChargeParameter` — no fitting.
+2. **Refit:** `generate_mpfit_charge_parameter()` runs the SVD solver against
+   all available multipoles to fit a new set of point charges that reproduces
+   them.
 
 ```python
-from pympfit import MoleculeMBISRecord
+from pympfit import MoleculeMBISRecord, extract_mbis_charges
 
 mbis_record = MoleculeMBISRecord.from_molecule(
     molecule, coords, multipoles, mbis_settings
 )
+
+# Direct path: raw MBIS charges (no fitting)
+mbis_parameter = extract_mbis_charges(mbis_record)
+
+# Optional: refit against all MBIS multipoles via MPFIT
 solver = MPFITSVDSolver(svd_threshold=1e-4)
-parameter = generate_mpfit_charge_parameter([mbis_record], solver)
-
-print("Fitted charges vs. MBIS charges:")
-for i, atom in enumerate(molecule.atoms):
-    element = SYMBOLS[atom.atomic_number]
-    print(f"  {element}{i + 1:>2d}: {parameter.value[i]:+.4f} (MBIS: {multipoles[i, 0]:+.4f})")
-print(f"  Total: {sum(parameter.value):+.4f}")
-
-
+fitted_parameter = generate_mpfit_charge_parameter([mbis_record], solver)
 ```
 
 ```text
-Fitted charges vs. MBIS charges:
+MBIS charges (Q00):
+  C 1: -0.4504
+  C 2: +0.1712
+  O 3: -0.6016
+  H 4: +0.1308
+  H 5: +0.1111
+  H 6: +0.1291
+  H 7: +0.0693
+  H 8: +0.0289
+  H 9: +0.4115
+  Total: +0.0000
+Refitted charges vs. raw MBIS:
   C 1: -0.1208 (MBIS: -0.4504)
   C 2: -0.0499 (MBIS: +0.1712)
   O 3: -0.5360 (MBIS: -0.6016)

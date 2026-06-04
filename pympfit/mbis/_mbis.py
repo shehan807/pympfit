@@ -7,7 +7,10 @@ from openff.units import Quantity, unit
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
+    from openff.recharge.charges.library import LibraryChargeParameter
     from openff.toolkit import Molecule
+
+    from pympfit.mbis.storage import MoleculeMBISRecord
 
 
 class MultipoleFormat(str, Enum):
@@ -208,3 +211,20 @@ class MBISGenerator(abc.ABC):
         )
 
         return conformer, mp
+
+
+def extract_mbis_charges(
+    mbis_record: "MoleculeMBISRecord",
+) -> "LibraryChargeParameter":
+    """Return the MBIS charges (Q00 column) as a LibraryChargeParameter."""
+    from openff.toolkit import Molecule
+
+    from pympfit.mpfit._mpfit import molecule_to_mpfit_library_charge
+
+    parameter = molecule_to_mpfit_library_charge(
+        Molecule.from_mapped_smiles(
+            mbis_record.tagged_smiles, allow_undefined_stereo=True
+        )
+    )
+    parameter.value = mbis_record.multipoles[:, 0].tolist()
+    return parameter
