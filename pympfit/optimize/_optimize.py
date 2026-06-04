@@ -227,8 +227,22 @@ class MPFITObjective(Objective):
     def extract_arrays(
         cls,
         multipole_record: MultipoleRecord,
+        fit_limit: int | None = None,
     ) -> dict:
-        """Extract numerical arrays from a single multipole record (GDMA or MBIS)."""
+        """Extract numerical arrays from a single multipole record (GDMA or MBIS).
+
+        Parameters
+        ----------
+        multipole_record
+            The record (GDMA or MBIS) containing multipoles and settings.
+        fit_limit
+            Optional maximum multipole rank (0-indexed) to use for fitting.
+            When provided and less than the record's available rank, the
+            multipole tensor is truncated so only terms up to this rank are
+            included in the fit. Allows running the QM/multipole step once
+            at a high rank and fitting charges at multiple lower ranks
+            without rerunning the QM calculation.
+        """
         from openff.toolkit import Molecule
 
         from pympfit.mpfit.core import _convert_flat_to_hierarchical
@@ -253,6 +267,18 @@ class MPFITObjective(Objective):
         multipoles = _convert_flat_to_hierarchical(
             multipole_record.multipoles, molecule.n_atoms, max_rank
         )
+
+        # Optionally truncate the multipole tensor for fitting at a lower rank
+        if fit_limit is not None:
+            if fit_limit > max_rank:
+                raise ValueError(
+                    f"fit_limit ({fit_limit}) cannot exceed the available "
+                    f"multipole expansion rank ({max_rank})"
+                )
+            if fit_limit < max_rank:
+                multipoles = multipoles[:, : fit_limit + 1, : fit_limit + 1, :]
+                max_rank = fit_limit
+
         return {
             "bohr_conformer": bohr_conformer,
             "multipoles": multipoles,
@@ -272,12 +298,20 @@ class MPFITObjective(Objective):
         _vsite_charge_parameter_keys: list[VirtualSiteChargeKey] | None = None,
         _vsite_coordinate_parameter_keys: list[VirtualSiteGeometryKey] | None = None,
         return_quse_masks: bool = False,
+        fit_limit: int | None = None,
     ) -> Generator[tuple[MPFITObjectiveTerm, dict] | MPFITObjectiveTerm, None, None]:
-        """Pre-calculates the terms that contribute to the total objective function."""
+        """Pre-calculates the terms that contribute to the total objective function.
+
+        Parameters
+        ----------
+        fit_limit
+            Optional maximum multipole rank (0-indexed) for fitting. See
+            ``extract_arrays`` for details.
+        """
         from pympfit.mpfit.core import build_A_matrix, build_b_vector
 
         for multipole_record in multipole_records:
-            arrays = cls.extract_arrays(multipole_record)
+            arrays = cls.extract_arrays(multipole_record, fit_limit=fit_limit)
             bohr_conformer = arrays["bohr_conformer"]
             multipoles = arrays["multipoles"]
             rvdw = arrays["rvdw"]

@@ -76,6 +76,7 @@ def _fit_single_conformer(
     multipole_record: MultipoleRecord,
     solver: "MPFITSolver",
     vsite_collection: "VirtualSiteCollection | None" = None,
+    fit_limit: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray | None]:
     """Fit charges for a single conformer.
 
@@ -87,6 +88,10 @@ def _fit_single_conformer(
         The solver to use for fitting.
     vsite_collection
         Optional virtual site collection defining extra charge sites.
+    fit_limit
+        Optional maximum multipole rank (0-indexed) for fitting. When
+        provided and less than the record's available rank, the multipole
+        tensor is truncated so only terms up to this rank are used.
 
     Returns
     -------
@@ -101,6 +106,7 @@ def _fit_single_conformer(
             [multipole_record],
             vsite_collection=vsite_collection,
             return_quse_masks=True,
+            fit_limit=fit_limit,
         )
     )
 
@@ -130,6 +136,7 @@ def generate_mpfit_charge_parameter(
     multipole_records: list[MultipoleRecord],
     solver: MPFITSolver | None = None,
     vsite_collection: "VirtualSiteCollection | None" = None,
+    fit_limit: int | None = None,
 ) -> LibraryChargeParameter | tuple[LibraryChargeParameter, np.ndarray]:
     """Generate point charges that reproduce the distributed multipole analysis data.
 
@@ -148,6 +155,13 @@ def generate_mpfit_charge_parameter(
     vsite_collection
         Optional virtual site collection defining extra charge sites beyond
         atoms. When provided, charges are fit at both atom and vsite positions.
+    fit_limit
+        Optional maximum multipole rank (0-indexed) for fitting. When provided
+        and less than the record's available rank, the multipole tensor is
+        truncated so only terms up to this rank are used. Allows running the
+        QM/multipole step once at a high rank (e.g., GDMA limit=8 or MBIS
+        max_radial_moment=4) and fitting charges at multiple lower ranks
+        without rerunning the QM calculation.
 
     Returns
     -------
@@ -184,7 +198,7 @@ def generate_mpfit_charge_parameter(
     all_vsite_charges = []
     for record in multipole_records:
         atom_charges, vsite_charges = _fit_single_conformer(
-            record, solver, vsite_collection
+            record, solver, vsite_collection, fit_limit=fit_limit
         )
         all_atom_charges.append(atom_charges)
         if vsite_charges is not None:
