@@ -58,6 +58,31 @@ where $R_{lm}$ is a regular solid harmonic. GDMA expands Equation
 (or even arbitrary virtual sites), serving as a physically interpretable bridge
 between QM charge density and classical force field electrostatics.
 
+## Minimal Basis Iterative Stockholder
+
+Minimal Basis Iterative Stockholder (MBIS) introduced by
+[Verstraelen et al.](https://pubs.acs.org/doi/10.1021/acs.jctc.6b00456) is a
+variant of the Hirshfeld atoms-in-molecules method that derives atomic charges
+and multipoles by fitting a *pro-density* — an atom-centered expansion in
+$s$-type Slater density functions — to the molecular electron density. The
+pro-density of each atom $A$ is expanded as
+
+$$
+\rho^0_A(\mathbf{r}) = \sum_{i=1}^{m_A} \frac{N_{A,i}}{8\pi\sigma_{A,i}^3}\exp\!\left(-\frac{|\mathbf{r}-\mathbf{R}_A|}{\sigma_{A,i}}\right),
+$$ (eq:mbis_pro_density)
+
+where the populations $N_{A,i}$ and widths $\sigma_{A,i}$ of each Slater shell
+are free parameters. These are refined iteratively to minimize the
+Kullback–Leibler divergence between the pro-density and a reference electron
+density $\rho(\mathbf{r})$,
+
+$$
+\Delta S = \sum_A \int \rho_A(\mathbf{r}) \ln\!\frac{\rho_A(\mathbf{r})}{\rho^0_A(\mathbf{r})} \, d\mathbf{r},
+$$ (eq:mbis_kl_divergence)
+
+yielding atomic populations and multipoles that scale linearly with system size
+and require no empirical radii or precomputed pro-atoms.
+
 ## MPFIT
 
 The MPFIT (multipole fitting) procedure originally outlined by
