@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from openff.recharge.utilities.molecule import smiles_to_molecule
 from openff.units import unit
+
 from pympfit import MBISSettings
 
 
@@ -186,9 +187,9 @@ class TestPsi4MBISGenerator:
 
         # Check that the expected settings appear in the input
         for expected_line in expected_mbis_settings:
-            assert expected_line in input_contents, (
-                f"Expected '{expected_line}' not found in:\n{input_contents}"
-            )
+            assert (
+                expected_line in input_contents
+            ), f"Expected '{expected_line}' not found in:\n{input_contents}"
 
         # Check the method is correct
         assert f"energy('{expected_method}'" in input_contents
@@ -273,9 +274,7 @@ class TestMultipoleTransform:
 
     def test_cartesian_to_spherical_dipole(self):
         """Test dipole transformation: Cartesian (x,y,z) -> Spherical (Q10,Q11c,Q11s)."""
-        from pympfit.mbis.multipole_transform import (
-            cartesian_to_spherical_dipole,
-        )
+        from pympfit.mbis.multipole_transform import cartesian_to_spherical_dipole
 
         # Test case: single atom with known dipole
         # Cartesian: [x, y, z] = [1.0, 2.0, 3.0]
@@ -288,9 +287,7 @@ class TestMultipoleTransform:
 
     def test_cartesian_to_spherical_dipole_multi_atom(self):
         """Test dipole transformation for multiple atoms."""
-        from pympfit.mbis.multipole_transform import (
-            cartesian_to_spherical_dipole,
-        )
+        from pympfit.mbis.multipole_transform import cartesian_to_spherical_dipole
 
         mu_cart = np.array(
             [
@@ -316,9 +313,7 @@ class TestMultipoleTransform:
 
         Verifies that Θzz = Q20 directly.
         """
-        from pympfit.mbis.multipole_transform import (
-            cartesian_to_spherical_quadrupole,
-        )
+        from pympfit.mbis.multipole_transform import cartesian_to_spherical_quadrupole
 
         # Create a simple traceless quadrupole
         # Θzz = 2, Θxx = -1, Θyy = -1 (traceless)
@@ -343,9 +338,7 @@ class TestMultipoleTransform:
 
         Verifies that Ωzzz = Q30 directly.
         """
-        from pympfit.mbis.multipole_transform import (
-            cartesian_to_spherical_octupole,
-        )
+        from pympfit.mbis.multipole_transform import cartesian_to_spherical_octupole
 
         # Create a simple octupole with Ωzzz = 5.0
         omega = np.zeros((1, 3, 3, 3))
@@ -358,9 +351,7 @@ class TestMultipoleTransform:
 
     def test_cartesian_to_spherical_multipoles_combined(self):
         """Test combined multipole transformation produces correct shape."""
-        from pympfit.mbis.multipole_transform import (
-            cartesian_to_spherical_multipoles,
-        )
+        from pympfit.mbis.multipole_transform import cartesian_to_spherical_multipoles
 
         n_atoms = 3
         charges = np.array([0.5, -0.25, -0.25])
@@ -479,9 +470,7 @@ class TestMultipoleTransform:
 
     def test_cartesian_multipoles_to_flat(self):
         """Test flattened Cartesian format produces correct shape."""
-        from pympfit.mbis.multipole_transform import (
-            cartesian_multipoles_to_flat,
-        )
+        from pympfit.mbis.multipole_transform import cartesian_multipoles_to_flat
 
         n_atoms = 2
         charges = np.array([1.0, -1.0])
@@ -536,9 +525,7 @@ class TestMBISMultipoleEvaluation:
             Psi4MBISGenerator,
             generate_mpfit_charge_parameter,
         )
-        from pympfit.mbis.evaluate_cartesian_multipoles import (
-            evaluate_dimer_interaction_energy,
-        )
+        from pympfit.electrostatics import evaluate_dimer_interaction_energy
         from pympfit.mbis.multipole_transform import flat_to_cartesian_multipoles
 
         # Create water molecule
