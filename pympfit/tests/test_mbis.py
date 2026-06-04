@@ -226,7 +226,8 @@ class TestPsi4MBISGenerator:
         )
 
         n_atoms = 5  # methane: 1 C + 4 H
-        # Number of components depends on max_moment (what we load) not max_radial_moment (what Psi4 computes)
+        # Number of components depends on max_moment (what we load),
+        # not max_radial_moment (what Psi4 computes)
         # For spherical format: sum of (2*l + 1) for l=0 to max_moment-1
         # max_moment=3 (default): 1 + 3 + 5 = 9 components
         n_components = sum(2 * l + 1 for l in range(settings.max_moment))
@@ -272,7 +273,7 @@ class TestMultipoleTransform:
     """Test Cartesian to spherical harmonic multipole transformations."""
 
     def test_cartesian_to_spherical_dipole(self):
-        """Test dipole transformation: Cartesian (x,y,z) -> Spherical (Q10,Q11c,Q11s)."""
+        """Test dipole transform: Cartesian (x,y,z) -> spherical (Q10,Q11c,Q11s)."""
         from pympfit.mbis.multipole_transform import cartesian_to_spherical_dipole
 
         # Test case: single atom with known dipole
@@ -354,9 +355,10 @@ class TestMultipoleTransform:
 
         n_atoms = 3
         charges = np.array([0.5, -0.25, -0.25])
-        dipoles = np.random.randn(n_atoms, 3)
-        quadrupoles = np.random.randn(n_atoms, 3, 3)
-        octupoles = np.random.randn(n_atoms, 3, 3, 3)
+        rng = np.random.default_rng(42)
+        dipoles = rng.standard_normal((n_atoms, 3))
+        quadrupoles = rng.standard_normal((n_atoms, 3, 3))
+        octupoles = rng.standard_normal((n_atoms, 3, 3, 3))
 
         mp = cartesian_to_spherical_multipoles(
             charges=charges,
@@ -406,7 +408,8 @@ class TestMultipoleTransform:
             # Use the 7 independent components and their relationships
             # Start with unique components and make symmetric
             vals = rng.standard_normal(10)  # 10 unique symmetric components
-            # xxx, xxy, xxz, xyy, xyz, xzz, yyy, yyz, yzz, zzz
+            # 10 unique components: x^3, x^2y, x^2z, xy^2, xyz, xz^2,
+            # y^3, y^2z, yz^2, z^3
             xxx, xxy, xxz, xyy, xyz, xzz, yyy, yyz, yzz, zzz = vals
 
             # For traceless: contract on first two indices = 0
@@ -474,8 +477,9 @@ class TestMultipoleTransform:
         n_atoms = 2
         charges = np.array([1.0, -1.0])
         dipoles = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
-        quadrupoles = np.random.randn(n_atoms, 3, 3)
-        octupoles = np.random.randn(n_atoms, 3, 3, 3)
+        rng = np.random.default_rng(42)
+        quadrupoles = rng.standard_normal((n_atoms, 3, 3))
+        octupoles = rng.standard_normal((n_atoms, 3, 3, 3))
 
         mp = cartesian_multipoles_to_flat(
             charges=charges,

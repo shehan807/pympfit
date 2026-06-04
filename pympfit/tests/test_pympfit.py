@@ -9,7 +9,7 @@ from pympfit import GDMASettings, MBISSettings
 from pympfit.gdma.psi4 import Psi4GDMAGenerator
 from pympfit.gdma.storage import MoleculeGDMARecord, MoleculeGDMAStore
 from pympfit.mbis.psi4 import Psi4MBISGenerator
-from pympfit.mbis.storage import MoleculeMBISRecord, MoleculeMBISStore
+from pympfit.mbis.storage import MoleculeMBISRecord
 from pympfit.mpfit import (
     generate_constrained_mpfit_charge_parameter,
     generate_global_atom_type_labels,
@@ -102,9 +102,9 @@ def test_pympfit_single(
         gdma_db_path = GDMA_DIR / "ionic_liquids.sqlite"
         store = MoleculeGDMAStore(str(gdma_db_path))
         records = store.retrieve(smiles=smiles)
-        assert len(records) > 0, (
-            f"No GDMA records found for {molecule_name} in {gdma_db_path.name}"
-        )
+        assert (
+            len(records) > 0
+        ), f"No GDMA records found for {molecule_name} in {gdma_db_path.name}"
         record = records[0]
         result_conformer = record.conformer_quantity
         multipoles = record.multipoles_quantity
@@ -152,16 +152,16 @@ def test_pympfit_single(
         f"expected ({n_atoms}, {expected_components})"
     )
     assert len(charges) == n_atoms
-    assert np.isclose(np.sum(charges), formal_charge, atol=0.05), (
-        f"sum(charges) = {np.sum(charges):.4f}, expected {formal_charge}"
-    )
+    assert np.isclose(
+        np.sum(charges), formal_charge, atol=0.05
+    ), f"sum(charges) = {np.sum(charges):.4f}, expected {formal_charge}"
 
     # MBIS and GDMA use different charge partitioning schemes, so MBIS
     # may have slightly higher RMSE, especially for aromatic systems
     rmse_tolerance = 0.03 if is_mbis else 0.01
-    assert rmse < rmse_tolerance, (
-        f"RMSE = {rmse:.6e} exceeds {rmse_tolerance} tolerance"
-    )
+    assert (
+        rmse < rmse_tolerance
+    ), f"RMSE = {rmse:.6e} exceeds {rmse_tolerance} tolerance"
 
 
 @pytest.mark.slow
@@ -207,9 +207,9 @@ def test_pympfit_multi(molecule_names, smiles_list, solver):
         charges = np.array(param.value)
         formal_q = mol.total_charge.m_as(unit.elementary_charge)
         assert len(charges) == mol.n_atoms
-        assert np.isclose(np.sum(charges), formal_q, atol=0.05), (
-            f"{name}: sum(charges)={np.sum(charges):.4f}, expected {formal_q}"
-        )
+        assert np.isclose(
+            np.sum(charges), formal_q, atol=0.05
+        ), f"{name}: sum(charges)={np.sum(charges):.4f}, expected {formal_q}"
 
         grid = np.load(DATA_DIR / f"{name}_grid.npy")
         ref_esp = np.load(DATA_DIR / f"{name}_esp.npy").flatten()
@@ -234,9 +234,9 @@ def test_pympfit_multi(molecule_names, smiles_list, solver):
         label_to_charges[lbl].append(q)
     for lbl, qs in label_to_charges.items():
         if len(qs) > 1:
-            assert np.allclose(qs, qs[0], atol=1e-4), (
-                f"label {lbl}: charges {qs} not equal"
-            )
+            assert np.allclose(
+                qs, qs[0], atol=1e-4
+            ), f"label {lbl}: charges {qs} not equal"
 
 
 @pytest.mark.parametrize(
@@ -346,9 +346,9 @@ def test_pympfit_vsite(
 
     # charge conservation
     total_charge = np.sum(all_charges)
-    assert np.isclose(total_charge, formal_charge, atol=0.05), (
-        f"sum(charges) = {total_charge:.4f}, expected {formal_charge}"
-    )
+    assert np.isclose(
+        total_charge, formal_charge, atol=0.05
+    ), f"sum(charges) = {total_charge:.4f}, expected {formal_charge}"
 
     assert rmse_with_vsite <= rmse_no_vsite * 1.5, (
         f"Vsite fit should remain reasonable: "
