@@ -103,11 +103,12 @@ class MPFITObjectiveTerm(ObjectiveTerm):
         record = self.multipole_record
         if isinstance(record, MoleculeGDMARecord):
             settings = record.gdma_settings
+            max_rank = settings.limit  # GDMA uses 0-based indexing
         else:
             settings = record.mbis_settings
+            max_rank = settings.limit - 1  # MBIS uses 1-based indexing
         r1 = settings.mpfit_inner_radius
         r2 = settings.mpfit_outer_radius
-        max_rank = settings.limit
         bohr_conformer_np = unit.convert(record.conformer, unit.angstrom, unit.bohr)
         bohr_conformer = torch.from_numpy(bohr_conformer_np)
         n_atoms = bohr_conformer.shape[0]
