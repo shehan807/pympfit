@@ -6,6 +6,7 @@
 [![GitHub Actions Build Status](https://github.com/shehan807/pympfit/actions/workflows/ci.yaml/badge.svg)](https://github.com/shehan807/pympfit/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/shehan807/pympfit/branch/main/graph/badge.svg)](https://codecov.io/gh/shehan807/pympfit)
 [![Documentation Status](https://readthedocs.org/projects/pympfit/badge/?version=latest)](https://pympfit.readthedocs.io/en/latest/?badge=latest)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20417501.svg)](https://doi.org/10.5281/zenodo.20417501)
 
 [Documentation](https://pympfit.readthedocs.io/) | [PyPI](https://pypi.org/project/pympfit/) | [GitHub](https://github.com/shehan807/pympfit)
 

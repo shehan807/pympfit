@@ -84,42 +84,6 @@ def _regular_solid_harmonic(
 
     xn, yn, zn, rn = x[nonzero], y[nonzero], z[nonzero], r[nonzero]
 
-    if l == 4:
-        if m == 0:
-            val = 0.125 * (
-                8.0 * zn**4
-                - 24.0 * (xn**2 + yn**2) * zn**2
-                + 3.0 * (xn**4 + 2.0 * xn**2 * yn**2 + yn**4)
-            )
-        elif m == 1 and cs == 0:
-            val = (
-                0.25
-                * np.sqrt(10.0)
-                * (4.0 * xn * zn**3 - 3.0 * xn * zn * (xn**2 + yn**2))
-            )
-        elif m == 1 and cs == 1:
-            val = (
-                0.25
-                * np.sqrt(10.0)
-                * (4.0 * yn * zn**3 - 3.0 * yn * zn * (xn**2 + yn**2))
-            )
-        elif m == 2 and cs == 0:
-            val = 0.25 * np.sqrt(5.0) * (xn**2 - yn**2) * (6.0 * zn**2 - xn**2 - yn**2)
-        elif m == 2 and cs == 1:
-            val = 0.50 * np.sqrt(5.0) * xn * yn * (6.0 * zn**2 - xn**2 - yn**2)
-        elif m == 3 and cs == 0:
-            val = 0.25 * np.sqrt(70.0) * zn * (xn**3 - 3.0 * xn * yn**2)
-        elif m == 3 and cs == 1:
-            val = 0.25 * np.sqrt(70.0) * zn * (3.0 * xn**2 * yn - yn**3)
-        elif m == 4 and cs == 0:
-            val = 0.125 * np.sqrt(35.0) * (xn**4 - 6.0 * xn**2 * yn**2 + yn**4)
-        elif m == 4 and cs == 1:
-            val = 0.500 * np.sqrt(35.0) * xn * yn * (xn**2 - yn**2)
-        else:
-            val = np.zeros_like(rn)
-        result[nonzero] = val
-        return result
-
     theta = np.arccos(zn / rn)
     phi = np.arctan2(yn, xn)
     Y = sph_harm_y(l, m, theta, phi)
