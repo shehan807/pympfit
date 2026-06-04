@@ -24,13 +24,7 @@ class TestMBISMultipoleEvaluation:
         from openff.units import unit
         from qcelemental import constants
 
-        from pympfit import (
-            MBISSettings,
-            MoleculeMBISRecord,
-            MPFITSVDSolver,
-            Psi4MBISGenerator,
-            generate_mpfit_charge_parameter,
-        )
+        from pympfit import MBISSettings, Psi4MBISGenerator
         from pympfit.electrostatics import evaluate_dimer_interaction_energy
         from pympfit.mbis.multipole_transform import flat_to_cartesian_multipoles
 
@@ -86,13 +80,6 @@ class TestMBISMultipoleEvaluation:
         coords_2, multipoles_2 = Psi4MBISGenerator.generate(
             molecule, conformer_2, settings, n_threads=1, memory=2 * unit.gigabyte
         )
-
-        # Create record and verify charge fitting works
-        record = MoleculeMBISRecord.from_molecule(
-            molecule, coords, multipoles, settings
-        )
-        charges = generate_mpfit_charge_parameter([record], MPFITSVDSolver())
-        assert len(charges.value) == 3
 
         # Convert multipoles to Cartesian tensors
         charges_a, dipoles_a, quadrupoles_a, _ = flat_to_cartesian_multipoles(

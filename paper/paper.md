@@ -7,6 +7,8 @@ authors:
     orcid: 0000-0002-2033-0862
     corresponding: true
     affiliation: 1
+  - name: Austin M. Wallace
+    affiliation: 1
   - name: Jesse McDaniel
     orcid: 0000-0002-9211-1108
     affiliation: 1
