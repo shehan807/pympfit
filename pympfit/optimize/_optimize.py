@@ -1,5 +1,5 @@
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 from openff.recharge.charges.vsite import (
@@ -14,7 +14,7 @@ from pympfit.gdma.storage import MoleculeGDMARecord
 from pympfit.mbis.storage import MoleculeMBISRecord
 
 # Type alias for records that can be used with MPFIT
-MultipoleRecord = Union[MoleculeGDMARecord, MoleculeMBISRecord]
+MultipoleRecord = MoleculeGDMARecord | MoleculeMBISRecord
 
 if TYPE_CHECKING:
     import torch

@@ -1,5 +1,5 @@
 import warnings
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 from openff.recharge.charges.library import LibraryChargeParameter
@@ -13,7 +13,7 @@ from pympfit.mpfit.solvers import MPFITSolver
 from pympfit.optimize import MPFITObjective
 
 # Type alias for records that can be used with MPFIT
-MultipoleRecord = Union[MoleculeGDMARecord, MoleculeMBISRecord]
+MultipoleRecord = MoleculeGDMARecord | MoleculeMBISRecord
 
 if TYPE_CHECKING:
     from openff.recharge.charges.vsite import VirtualSiteCollection

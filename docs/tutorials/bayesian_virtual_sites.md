@@ -56,7 +56,7 @@ constrained to somewhere along the C–Cl bond (`[#17:1]-[#6:2]`). The
 from pympfit.optimize import MPFITObjective
 
 [objective_term] = list(MPFITObjective.compute_objective_terms(
-    gdma_records=[record],
+    multipole_records=[record],
     vsite_collection=vsite_collection,
     _vsite_charge_parameter_keys=[("[#17:1]-[#6:2]", "BondCharge", "EP", 0)],
     _vsite_coordinate_parameter_keys=[("[#17:1]-[#6:2]", "BondCharge", "EP", "distance")],
