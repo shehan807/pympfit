@@ -7,6 +7,7 @@ from contextlib import AbstractContextManager, contextmanager
 
 from openff.toolkit import Molecule, Quantity
 from openff.toolkit.utils.exceptions import AtomMappingWarning
+from openff.units import unit
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
@@ -17,13 +18,15 @@ from pympfit.mbis.storage.db import (
     DB_VERSION,
     DBBase,
     DBConformerRecord,
-    DBMBISSettings,
     DBGeneralProvenance,
     DBInformation,
+    DBMBISSettings,
     DBMoleculeRecord,
     DBSoftwareProvenance,
 )
 from pympfit.mbis.storage.exceptions import IncompatibleDBVersion
+
+unit.define("AU = [] = au = atomic_unit")
 
 
 class MoleculeMBISRecord(BaseModel):
@@ -336,7 +339,7 @@ class MoleculeMBISStore:
         records_by_smiles: dict[str, list[MoleculeMBISRecord]] = defaultdict(list)
 
         for record in records:
-            validated_record = MoleculeMBISRecord(**record.dict())
+            validated_record = MoleculeMBISRecord(**record.model_dump())
             smiles = self._tagged_to_canonical_smiles(validated_record.tagged_smiles)
 
             records_by_smiles[smiles].append(validated_record)
