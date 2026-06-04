@@ -4,14 +4,7 @@ import abc
 import math
 from typing import TypeVar
 
-from sqlalchemy import (
-    Column,
-    ForeignKey,
-    Integer,
-    PickleType,
-    String,
-    UniqueConstraint,
-)
+from sqlalchemy import Column, ForeignKey, Integer, PickleType, String, UniqueConstraint
 from sqlalchemy.orm import Query, Session, declarative_base, relationship
 
 from pympfit.mbis import MBISSettings
@@ -127,9 +120,6 @@ class DBMBISSettings(_UniqueMixin, DBBase):
                 instance.mbis_spherical_points,
                 instance.guess,
                 instance.multipole_units,
-                _float_to_db_int(instance.mpfit_inner_radius),
-                _float_to_db_int(instance.mpfit_outer_radius),
-                _float_to_db_int(instance.mpfit_atom_radius),
             )
         )
 
@@ -154,18 +144,6 @@ class DBMBISSettings(_UniqueMixin, DBBase):
             )
             .filter(DBMBISSettings.guess == instance.guess)
             .filter(DBMBISSettings.multipole_units == instance.multipole_units)
-            .filter(
-                DBMBISSettings.mpfit_inner_radius
-                == _float_to_db_int(instance.mpfit_inner_radius)
-            )
-            .filter(
-                DBMBISSettings.mpfit_outer_radius
-                == _float_to_db_int(instance.mpfit_outer_radius)
-            )
-            .filter(
-                DBMBISSettings.mpfit_atom_radius
-                == _float_to_db_int(instance.mpfit_atom_radius)
-            )
         )
 
     @classmethod

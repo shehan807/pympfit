@@ -1,10 +1,10 @@
-"""Exceptions raised when storing GDMA data."""
+"""Exceptions raised when storing MBIS data."""
 
 from openff.recharge.utilities.exceptions import RechargeException
 
 
 class IncompatibleDBVersion(RechargeException):
-    """Exception raised when GDMA store version doesn't match expected version."""
+    """Exception raised when MBIS store version doesn't match expected version."""
 
     def __init__(self, found_version: int, expected_version: int) -> None:
         """Initialize the exception.

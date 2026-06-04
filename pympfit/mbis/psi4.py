@@ -47,10 +47,8 @@ class Psi4MBISGenerator(MBISGenerator):
         minimize
             Whether to energy minimize the conformer prior to computing the MBIS using
             the same level of theory that the MBIS will be computed at.
-        compute_esp
-            Whether to compute the multipoles.
-        compute_field
-            Whether to compute the field at each grid point.
+        compute_mp
+            Whether to compute the multipole moments.
         memory
             The memory to make available to Psi4 for computation
 
@@ -129,7 +127,7 @@ class Psi4MBISGenerator(MBISGenerator):
         memory: Quantity = 500 * unit.mebibytes,
     ) -> tuple[Quantity, Quantity | None, Quantity | None]:
         # Perform the calculation in a temporary directory
-        with temporary_cd("./"):  # directory):
+        with temporary_cd():
             # Store the input file.
             input_contents = cls._generate_input(
                 molecule,

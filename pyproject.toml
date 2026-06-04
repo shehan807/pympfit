@@ -154,6 +154,7 @@ docstring-code-format = true
 "pympfit/optimize/_optimize.py" = ["N806"]
 # Psi4: S607 partial executable path is intentional (psi4 expected in PATH)
 "pympfit/gdma/psi4.py" = ["S607"]
+"pympfit/mbis/psi4.py" = ["S607"]
 
 [tool.coverage.run]
 omit = [
