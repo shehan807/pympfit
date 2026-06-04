@@ -37,7 +37,6 @@ oeprop(
     wfn,
     'mbis_charges',
 )
-print('OEPROP')
 {%- endif %}
 
 # Save final geometry
@@ -48,7 +47,7 @@ import numpy as np
 {%- if compute_mp %}
 mbis_charges = wfn.variable('MBIS CHARGES')
 np.save('mbis_charges.npy', mbis_charges)
-# Need to ensure max_radial_mooment is > 1
+# Need to ensure max_radial_moment is > 1
 {%- if max_radial_moment | int > 1 %}
 mbis_dipoles = wfn.variable('MBIS DIPOLES')
 np.save('mbis_dipoles.npy', mbis_dipoles)
