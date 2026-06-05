@@ -1,8 +1,10 @@
 # Quick Start
 
-This tutorial walks through fitting partial charges for ethanol using PyMPFIT.
-The full runnable script is at `examples/tutorials/quickstart.py`.
+This tutorial walks through fitting partial charges for ethanol using PyMPFIT
+with GDMA and MBIS. The full runnable script is at
+`examples/tutorials/quickstart.py`.
 
+# GDMA Multipoles
 ## 1. QM and GDMA Settings
 
 `GDMASettings` controls both the Psi4 QM calculation and the
@@ -95,3 +97,104 @@ Fitted charges:
   H 9: +0.2977
   Total: -0.0000
 ```
+
+# MBIS Multipoles
+
+MBIS (Minimal Basis Iterative Stockholder) is an alternative charge
+method that can be used instead of GDMA.
+
+## 5. MBIS Settings
+
+`MBISSettings` controls the Psi4 QM calculation through MBIS-specific parameters.
+
+```python
+from pympfit import MBISSettings
+
+mbis_settings = MBISSettings(
+    method="pbe0",
+    basis="def2-SVP",
+    max_moment=3,  # 1=charges, 2=+dipoles, 3=+quadrupoles, 4=+octupoles
+    max_radial_moment=4,  # Must be >= max_moment
+    limit=3,  # Multipole expansion order for MPFIT (should match max_moment)
+    multipole_format="spherical",  # "spherical" or "cartesian"
+)
+```
+
+## 6. Generate MBIS Multipoles
+
+Run Psi4 to compute MBIS multipole moments. The process is similar to GDMA.
+
+```python
+from pympfit import Psi4MBISGenerator
+
+t0 = time.perf_counter()
+coords, multipoles = Psi4MBISGenerator.generate(
+    molecule, conformer, mbis_settings, minimize=True
+)
+elapsed = time.perf_counter() - t0
+
+print(f"Multipoles shape: {multipoles.shape}")
+print(f"MBIS generation time: {elapsed:.2f}s")
+```
+
+```text
+Multipoles shape: (9, 9)
+MBIS generation time: 28.45s
+```
+
+Note: MBIS with `max_moment=3` produces 9 components per atom (charges, dipoles,
+and quadrupoles)
+
+## 7. Obtain Charges from MBIS
+
+Two paths are available:
+
+1. **Direct (recommended for raw MBIS):** `extract_mbis_charges()` returns the
+   Psi4-emitted MBIS partial charges (the Q00 column of the multipoles) wrapped
+   in a `LibraryChargeParameter` — no fitting.
+2. **Refit:** `generate_mpfit_charge_parameter()` runs the SVD solver against
+   all available multipoles to fit a new set of point charges that reproduces
+   them.
+
+```python
+from pympfit import MoleculeMBISRecord, extract_mbis_charges
+
+mbis_record = MoleculeMBISRecord.from_molecule(
+    molecule, coords, multipoles, mbis_settings
+)
+
+# Direct path: raw MBIS charges (no fitting)
+mbis_parameter = extract_mbis_charges(mbis_record)
+
+# Optional: refit against all MBIS multipoles via MPFIT
+solver = MPFITSVDSolver(svd_threshold=1e-4)
+fitted_parameter = generate_mpfit_charge_parameter([mbis_record], solver)
+```
+
+```text
+MBIS charges (Q00):
+  C 1: -0.4504
+  C 2: +0.1712
+  O 3: -0.6016
+  H 4: +0.1308
+  H 5: +0.1111
+  H 6: +0.1291
+  H 7: +0.0693
+  H 8: +0.0289
+  H 9: +0.4115
+  Total: +0.0000
+Refitted charges vs. raw MBIS:
+  C 1: -0.1208 (MBIS: -0.4504)
+  C 2: -0.0499 (MBIS: +0.1712)
+  O 3: -0.5360 (MBIS: -0.6016)
+  H 4: +0.0413 (MBIS: +0.1308)
+  H 5: +0.0292 (MBIS: +0.1111)
+  H 6: +0.0651 (MBIS: +0.1291)
+  H 7: +0.1159 (MBIS: +0.0693)
+  H 8: +0.0628 (MBIS: +0.0289)
+  H 9: +0.3924 (MBIS: +0.4115)
+  Total: +0.0001
+```
+
+**Note:** MBIS and GDMA produce different charges because they use different
+charge models.

@@ -5,9 +5,11 @@ import pytest
 from openff.toolkit import Molecule
 from openff.units import unit
 
-from pympfit import GDMASettings
+from pympfit import GDMASettings, MBISSettings
 from pympfit.gdma.psi4 import Psi4GDMAGenerator
 from pympfit.gdma.storage import MoleculeGDMARecord, MoleculeGDMAStore
+from pympfit.mbis.psi4 import Psi4MBISGenerator
+from pympfit.mbis.storage import MoleculeMBISRecord
 from pympfit.mpfit import (
     generate_constrained_mpfit_charge_parameter,
     generate_global_atom_type_labels,
@@ -29,6 +31,7 @@ BOHR_TO_ANGSTROM = unit.convert(1.0, unit.bohr, unit.angstrom)
     [
         (MoleculeGDMARecord, Psi4GDMAGenerator, MPFITSVDSolver()),
         (MoleculeGDMARecord, Psi4GDMAGenerator, ConstrainedSciPySolver()),
+        (MoleculeMBISRecord, Psi4MBISGenerator, MPFITSVDSolver()),
     ],
 )
 @pytest.mark.parametrize(
@@ -77,7 +80,25 @@ def test_pympfit_single(
     formal_charge = molecule.total_charge.m_as(unit.elementary_charge)
     n_atoms = molecule.n_atoms
 
+    # Determine if we're testing MBIS or GDMA
+    is_mbis = record_class == MoleculeMBISRecord
+
+    # Create settings object based on multipole method
+    if is_mbis:
+        settings = MBISSettings(
+            method="scf",
+            basis="sto-3g",
+            limit=3,
+            max_moment=3,
+            max_radial_moment=3,
+        )
+    else:
+        settings = sto3g_gdma_settings
+
     if gdma_record_exists:
+        # Only GDMA has pre-existing records in ionic_liquids.sqlite
+        if is_mbis:
+            pytest.skip("No pre-existing MBIS records for ionic liquids")
         gdma_db_path = GDMA_DIR / "ionic_liquids.sqlite"
         store = MoleculeGDMAStore(str(gdma_db_path))
         records = store.retrieve(smiles=smiles)
@@ -85,17 +106,17 @@ def test_pympfit_single(
             len(records) > 0
         ), f"No GDMA records found for {molecule_name} in {gdma_db_path.name}"
         record = records[0]
-        gdma_conformer = record.conformer_quantity
+        result_conformer = record.conformer_quantity
         multipoles = record.multipoles_quantity
     else:
-        gdma_conformer, multipoles = generator.generate(
+        result_conformer, multipoles = generator.generate(
             molecule,
             conformer * unit.angstrom,
-            sto3g_gdma_settings,
+            settings,
             minimize=False,
         )
         record = record_class.from_molecule(
-            molecule, gdma_conformer, multipoles, sto3g_gdma_settings
+            molecule, result_conformer, multipoles, settings
         )
 
     if isinstance(solver, ConstrainedMPFITSolver):
@@ -109,7 +130,7 @@ def test_pympfit_single(
     charges = np.array(parameter.value)
 
     # Point-charge ESP via Coulomb's law
-    coord = gdma_conformer.m_as(unit.angstrom)
+    coord = result_conformer.m_as(unit.angstrom)
     diff = grid[:, np.newaxis, :] - coord[np.newaxis, :, :]
     distances = np.linalg.norm(diff, axis=2)
     calc_esp = np.sum(charges[np.newaxis, :] / distances, axis=1) * BOHR_TO_ANGSTROM
@@ -117,10 +138,15 @@ def test_pympfit_single(
     esp_diff = ref_esp - calc_esp
     rmse = np.sqrt(np.mean(esp_diff**2))
 
+    # Determine expected multipole components
     if gdma_record_exists:
-        expected_components = (record.gdma_settings.limit + 1) ** 2
+        expected_components = (
+            record.gdma_settings.limit + 1
+        ) ** 2  # GDMA uses 0-based indexing
+    elif is_mbis:
+        expected_components = settings.limit**2  # MBIS uses 1-based indexing
     else:
-        expected_components = (sto3g_gdma_settings.limit + 1) ** 2
+        expected_components = (settings.limit + 1) ** 2  # GDMA uses 0-based indexing
     assert multipoles.shape == (n_atoms, expected_components), (
         f"multipoles shape {multipoles.shape}, "
         f"expected ({n_atoms}, {expected_components})"
@@ -129,7 +155,13 @@ def test_pympfit_single(
     assert np.isclose(
         np.sum(charges), formal_charge, atol=0.05
     ), f"sum(charges) = {np.sum(charges):.4f}, expected {formal_charge}"
-    assert rmse < 1e-2, f"RMSE = {rmse:.6e} exceeds 1e-2 tolerance"
+
+    # MBIS and GDMA use different charge partitioning schemes, so MBIS
+    # may have slightly higher RMSE, especially for aromatic systems
+    rmse_tolerance = 0.03 if is_mbis else 0.01
+    assert (
+        rmse < rmse_tolerance
+    ), f"RMSE = {rmse:.6e} exceeds {rmse_tolerance} tolerance"
 
 
 @pytest.mark.slow

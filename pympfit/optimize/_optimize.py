@@ -11,6 +11,10 @@ from openff.recharge.optimize._optimize import Objective, ObjectiveTerm
 from openff.units import unit
 
 from pympfit.gdma.storage import MoleculeGDMARecord
+from pympfit.mbis.storage import MoleculeMBISRecord
+
+# Type alias for records that can be used with MPFIT
+MultipoleRecord = MoleculeGDMARecord | MoleculeMBISRecord
 
 if TYPE_CHECKING:
     import torch
@@ -24,8 +28,8 @@ class MPFITObjectiveTerm(ObjectiveTerm):
 
     Attributes
     ----------
-    gdma_record : MoleculeGDMARecord | None
-        Reference to the source GDMA record.
+    multipole_record : MultipoleRecord | None
+        Reference to the source multipole record (GDMA or MBIS).
     quse_masks : np.ndarray | None
         Boolean masks indicating which charges are included for each multipole
         site.
@@ -33,7 +37,7 @@ class MPFITObjectiveTerm(ObjectiveTerm):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.gdma_record: MoleculeGDMARecord | None = None
+        self.multipole_record: MultipoleRecord | None = None
         self.quse_masks: np.ndarray | None = None
 
     @classmethod
@@ -95,13 +99,22 @@ class MPFITObjectiveTerm(ObjectiveTerm):
                 "use the SVD solver directly via generate_mpfit_charge_parameter()."
             )
 
-        settings = self.gdma_record.gdma_settings
+        # Get settings from record (works for both GDMA and MBIS)
+        record = self.multipole_record
+        if isinstance(record, MoleculeGDMARecord):
+            settings = record.gdma_settings
+            max_rank = settings.limit  # GDMA uses 0-based indexing
+        else:
+            settings = record.mbis_settings
+            if settings.multipole_format == "cartesian":
+                raise NotImplementedError(
+                    "MPFIT against cartesian MBIS multipoles is not implemented. "
+                    "Construct MBISSettings with multipole_format='spherical'."
+                )
+            max_rank = settings.limit - 1  # MBIS uses 1-based indexing
         r1 = settings.mpfit_inner_radius
         r2 = settings.mpfit_outer_radius
-        max_rank = settings.limit
-        bohr_conformer_np = unit.convert(
-            self.gdma_record.conformer, unit.angstrom, unit.bohr
-        )
+        bohr_conformer_np = unit.convert(record.conformer, unit.angstrom, unit.bohr)
         bohr_conformer = torch.from_numpy(bohr_conformer_np)
         n_atoms = bohr_conformer.shape[0]
 
@@ -219,62 +232,79 @@ class MPFITObjective(Objective):
     @classmethod
     def extract_arrays(
         cls,
-        gdma_record: MoleculeGDMARecord,
+        multipole_record: MultipoleRecord,
         fit_limit: int | None = None,
     ) -> dict:
-        """Extract numerical arrays from a single GDMA record.
+        """Extract numerical arrays from a single multipole record (GDMA or MBIS).
 
         Parameters
         ----------
-        gdma_record
-            The GDMA record containing multipoles and settings.
+        multipole_record
+            The record (GDMA or MBIS) containing multipoles and settings.
         fit_limit
-            Optional maximum multipole rank to use for fitting. When provided
-            and less than the GDMA ``limit``, the multipole tensor is truncated
-            so that only terms up to this rank are included in the fit. This
-            allows running GDMA once at a high rank and fitting charges at
-            multiple lower ranks without rerunning GDMA.
+            Optional maximum multipole rank (0-indexed) to use for fitting.
+            When provided and less than the record's available rank, the
+            multipole tensor is truncated so only terms up to this rank are
+            included in the fit. Allows running the QM/multipole step once
+            at a high rank and fitting charges at multiple lower ranks
+            without rerunning the QM calculation.
         """
         from openff.toolkit import Molecule
 
         from pympfit.mpfit.core import _convert_flat_to_hierarchical
 
         molecule = Molecule.from_mapped_smiles(
-            gdma_record.tagged_smiles, allow_undefined_stereo=True
+            multipole_record.tagged_smiles, allow_undefined_stereo=True
         )
-        settings = gdma_record.gdma_settings
-        bohr_conformer = unit.convert(gdma_record.conformer, unit.angstrom, unit.bohr)
+        # Get settings from record (works for both GDMA and MBIS)
+        if isinstance(multipole_record, MoleculeGDMARecord):
+            settings = multipole_record.gdma_settings
+        else:
+            settings = multipole_record.mbis_settings
+            if settings.multipole_format == "cartesian":
+                raise NotImplementedError(
+                    "MPFIT against cartesian MBIS multipoles is not implemented. "
+                    "Construct MBISSettings with multipole_format='spherical'."
+                )
+        bohr_conformer = unit.convert(
+            multipole_record.conformer, unit.angstrom, unit.bohr
+        )
+        # Convert limit to 0-indexed max_rank for MBIS (1-based) vs GDMA (0-based)
+        if isinstance(multipole_record, MoleculeGDMARecord):
+            max_rank = settings.limit  # GDMA uses 0-based indexing
+        else:
+            max_rank = settings.limit - 1  # MBIS uses 1-based indexing
+
         multipoles = _convert_flat_to_hierarchical(
-            gdma_record.multipoles, molecule.n_atoms, settings.limit
+            multipole_record.multipoles, molecule.n_atoms, max_rank
         )
 
-        # Determine effective rank for fitting
-        effective_limit = settings.limit
+        # Optionally truncate the multipole tensor for fitting at a lower rank
         if fit_limit is not None:
-            if fit_limit > settings.limit:
+            if fit_limit > max_rank:
                 raise ValueError(
-                    f"fit_limit ({fit_limit}) cannot exceed the GDMA expansion "
-                    f"rank ({settings.limit})"
+                    f"fit_limit ({fit_limit}) cannot exceed the available "
+                    f"multipole expansion rank ({max_rank})"
                 )
-            if fit_limit < effective_limit:
-                effective_limit = fit_limit
+            if fit_limit < max_rank:
                 multipoles = multipoles[:, : fit_limit + 1, : fit_limit + 1, :]
+                max_rank = fit_limit
 
         return {
             "bohr_conformer": bohr_conformer,
             "multipoles": multipoles,
             "rvdw": np.full(molecule.n_atoms, settings.mpfit_atom_radius),
-            "lmax": np.full(molecule.n_atoms, effective_limit, dtype=float),
+            "lmax": np.full(molecule.n_atoms, max_rank, dtype=float),
             "r1": settings.mpfit_inner_radius,
             "r2": settings.mpfit_outer_radius,
-            "maxl": effective_limit,
+            "maxl": max_rank,
             "n_atoms": molecule.n_atoms,
         }
 
     @classmethod
     def compute_objective_terms(
         cls,
-        gdma_records: list[MoleculeGDMARecord],
+        multipole_records: list[MultipoleRecord],
         vsite_collection: VirtualSiteCollection | None = None,
         _vsite_charge_parameter_keys: list[VirtualSiteChargeKey] | None = None,
         _vsite_coordinate_parameter_keys: list[VirtualSiteGeometryKey] | None = None,
@@ -286,14 +316,13 @@ class MPFITObjective(Objective):
         Parameters
         ----------
         fit_limit
-            Optional maximum multipole rank for fitting. When provided and less
-            than the GDMA expansion rank, the multipole tensor is truncated so
-            only terms up to this rank are used.
+            Optional maximum multipole rank (0-indexed) for fitting. See
+            ``extract_arrays`` for details.
         """
         from pympfit.mpfit.core import build_A_matrix, build_b_vector
 
-        for gdma_record in gdma_records:
-            arrays = cls.extract_arrays(gdma_record, fit_limit=fit_limit)
+        for multipole_record in multipole_records:
+            arrays = cls.extract_arrays(multipole_record, fit_limit=fit_limit)
             bohr_conformer = arrays["bohr_conformer"]
             multipoles = arrays["multipoles"]
             rvdw = arrays["rvdw"]
@@ -307,9 +336,9 @@ class MPFITObjective(Objective):
                 from openff.toolkit import Molecule
 
                 molecule = Molecule.from_mapped_smiles(
-                    gdma_record.tagged_smiles, allow_undefined_stereo=True
+                    multipole_record.tagged_smiles, allow_undefined_stereo=True
                 )
-                conformer_angstrom = gdma_record.conformer
+                conformer_angstrom = multipole_record.conformer
 
                 vsite_positions = VirtualSiteGenerator.generate_positions(
                     molecule, vsite_collection, conformer_angstrom * unit.angstrom
@@ -413,7 +442,7 @@ class MPFITObjective(Objective):
                 reference_values,
             )
 
-            objective_term.gdma_record = gdma_record
+            objective_term.multipole_record = multipole_record
             objective_term.quse_masks = quse_masks
 
             if return_quse_masks:

@@ -12,9 +12,13 @@ from openff.units.elements import SYMBOLS
 
 from pympfit import (
     GDMASettings,
+    MBISSettings,
     MoleculeGDMARecord,
+    MoleculeMBISRecord,
     MPFITSVDSolver,
     Psi4GDMAGenerator,
+    Psi4MBISGenerator,
+    extract_mbis_charges,
     generate_mpfit_charge_parameter,
 )
 
@@ -57,3 +61,59 @@ for i, atom in enumerate(molecule.atoms):
     element = SYMBOLS[atom.atomic_number]
     print(f"  {element}{i + 1:>2d}: {parameter.value[i]:+.4f}")
 print(f"  Total: {sum(parameter.value):+.4f}")
+
+####################################
+#          MBIS Section            #
+####################################
+
+# Settings
+settings = MBISSettings(
+    method="pbe0",
+    basis="def2-SVP",
+    max_moment=3,
+    max_radial_moment=4,
+    limit=3,
+    multipole_format="spherical",
+    mbis_d_convergence=9.0,
+    mbis_radial_points=99,
+    mbis_spherical_points=590,
+)
+
+# Conformer and multipoles
+molecule = Molecule.from_smiles("CCO")
+molecule.generate_conformers(n_conformers=1)
+[conformer] = extract_conformers(molecule)
+
+print(f"Molecule: {molecule.to_smiles()} ({molecule.n_atoms} atoms)")
+
+t0 = time.perf_counter()
+coords, multipoles = Psi4MBISGenerator.generate(
+    molecule,
+    conformer,
+    settings,
+    minimize=True,
+)
+print(f"MBIS generation: {time.perf_counter() - t0:.2f}s")
+print()
+
+record = MoleculeMBISRecord.from_molecule(molecule, coords, multipoles, settings)
+
+# Direct path: raw Psi4-emitted MBIS partial charges (no fitting).
+mbis_parameter = extract_mbis_charges(record)
+print("MBIS charges (Q00):")
+for i, atom in enumerate(molecule.atoms):
+    element = SYMBOLS[atom.atomic_number]
+    print(f"  {element}{i + 1:>2d}: {mbis_parameter.value[i]:+.4f}")
+print(f"  Total: {sum(mbis_parameter.value):+.4f}")
+
+# Optional: also refit point charges to all MBIS multipoles via MPFIT.
+solver = MPFITSVDSolver(svd_threshold=1e-4)
+fitted_parameter = generate_mpfit_charge_parameter([record], solver)
+print("Refitted charges vs. raw MBIS:")
+for i, atom in enumerate(molecule.atoms):
+    element = SYMBOLS[atom.atomic_number]
+    print(
+        f"  {element}{i + 1:>2d}: {fitted_parameter.value[i]:+.4f} "
+        f"(MBIS: {mbis_parameter.value[i]:+.4f})"
+    )
+print(f"  Total: {sum(fitted_parameter.value):+.4f}")

@@ -6,4 +6,5 @@ API Documentation
 
    api/mpfit
    api/gdma
+   api/mbis
    api/optimize

@@ -79,7 +79,7 @@ class TestComputeObjectiveTerms:
         n_atoms = 2
 
         objective_terms_generator = MPFITObjective.compute_objective_terms(
-            gdma_records=[record],
+            multipole_records=[record],
             return_quse_masks=True,
         )
         objective_terms = list(objective_terms_generator)
@@ -123,7 +123,7 @@ class TestComputeObjectiveTerms:
         n_atoms = 3
 
         objective_terms_generator = MPFITObjective.compute_objective_terms(
-            gdma_records=[record],
+            multipole_records=[record],
             return_quse_masks=True,
         )
         objective_terms = list(objective_terms_generator)
@@ -180,7 +180,7 @@ class TestComputeObjectiveTerms:
         n_atoms = 6
 
         objective_terms_generator = MPFITObjective.compute_objective_terms(
-            gdma_records=[record],
+            multipole_records=[record],
             return_quse_masks=True,
         )
         objective_terms = list(objective_terms_generator)
@@ -221,7 +221,7 @@ class TestComputeObjectiveTerms:
         record = _make_hcl_record(RADIUS_LARGE)
 
         objective_terms_generator = MPFITObjective.compute_objective_terms(
-            gdma_records=[record],
+            multipole_records=[record],
             return_quse_masks=False,
         )
         objective_terms = list(objective_terms_generator)
@@ -409,9 +409,9 @@ class TestPredict:
         )
 
         if molecule_name == "methanol":
-            gdma_record = meoh_gdma_sto3g
+            multipole_record = meoh_gdma_sto3g
         elif molecule_name == "water":
-            gdma_record = _make_water_record(RADIUS_LARGE)
+            multipole_record = _make_water_record(RADIUS_LARGE)
         else:
             raise ValueError(f"Unknown molecule: {molecule_name}")
 
@@ -432,7 +432,7 @@ class TestPredict:
 
         objective_term, metadata = next(
             MPFITObjective.compute_objective_terms(
-                [gdma_record],
+                [multipole_record],
                 vsite_collection=vsite_collection,
                 _vsite_coordinate_parameter_keys=vsite_coord_keys,
                 return_quse_masks=True,
