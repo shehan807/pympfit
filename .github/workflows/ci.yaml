@@ -48,14 +48,14 @@ jobs:
       - name: Install Package
         shell: bash -l {0}
         run: |
-          micromamba install psi4 libint=2.9 pygdma -c conda-forge -y
+          micromamba install psi4 pygdma -c conda-forge -y
           python -m pip install -e .
 
       - name: Conda Environment Information
         shell: bash -l {0}
         run: |
-          conda info
-          conda list
+          micromamba info
+          micromamba list
 
       - name: Run Tests (fast)
         if: github.event_name != 'pull_request'

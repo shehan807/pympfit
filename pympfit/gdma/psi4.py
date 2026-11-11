@@ -43,10 +43,10 @@ class Psi4GDMAGenerator(GDMAGenerator):
         minimize
             Whether to energy minimize the conformer prior to computing the GDMA using
             the same level of theory that the GDMA will be computed at.
-        compute_esp
-            Whether to compute the multipoles.
-        compute_field
-            Whether to compute the field at each grid point.
+        compute_mp
+            Whether to compute the distributed multipole moments. When ``True``
+            the Psi4 ``MULTIPOLE_MOMENT`` property is requested; when ``False``
+            the QM step still runs but the multipole computation is skipped.
         memory
             The memory to make available to Psi4 for computation
 

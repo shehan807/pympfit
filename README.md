@@ -27,11 +27,9 @@ PyMPFIT is a free, open-source software for performing partial atomic charge fit
 PyMPFIT depends on [OpenFF](https://openforcefield.org/) packages and [Psi4](https://psicode.org/)/[GDMA](https://github.com/psi4/gdma), which are distributed via conda-forge. *Works with conda, mamba, or micromamba.*
 
 ```bash
-conda create -n pympfit python=3.12 openff-recharge openff-interchange openff-utilities psi4 libint=2.9 pygdma -c conda-forge -y
+conda create -n pympfit python=3.12 openff-recharge openff-interchange openff-utilities psi4 pygdma -c conda-forge -y
 conda activate pympfit
 ```
-
-> **Note:** The `libint=2.9` pin is a temporary workaround for a psi4/libint2 compatibility issue. This will be resolved in psi4 v1.10 build 3.
 
 ### Install
 
