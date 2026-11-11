@@ -17,7 +17,7 @@ distributed multipole analysis.
         basis="aug-cc-pvdz",      # Basis set
         method="hf",              # QM method (hf, pbe0, mp2, etc.)
         limit=2,                  # Max multipole rank (2 = up to quadrupole)
-        radius=[0.65, 0.65],      # DMA radius parameters
+        radius=["C", 0.65, "N", 0.55, "H", 0.30],  # per-element DMA radius overrides (Angstrom)
         switch=4.0,               # Switching function parameter
     )
 
