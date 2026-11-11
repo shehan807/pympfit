@@ -42,7 +42,7 @@ In contrast, software support for multipole moment-based charge fitting methods 
 
 `pympfit` originated as a fork of OpenFF-Recharge [@parmar_shehan807openff-pympfit-fork_2026], inheriting Open Force Field class hierarchy, design patterns for modular and widely tested codebases. The package comprises of four layers: (1) `gdma`, a `psi4` interface to generate Jinja2-templated GDMA inputs for automated molecular multipole moment generation; (2) `storage`, implemented for an SQLite backend for persistent data across molecules and multiple conformers; (3) `mpfit`, carrying a class of solvers (e.g., singular value decomposition, nonlinear constrained optimization); and (4) `optimize`, a layer to store `ObjectiveTerm` classes for handover of objective functions for advanced algorithms, such as Bayesian virtual site fitting conducted in `pyro`.  
 
-  ![`pympfit` software design consisting of four distinct layers preceding OpenFF-standardized output \label{fig:software_design}](figures/software_design.png)]
+  ![`pympfit` software design consisting of four distinct layers preceding OpenFF-standardized output \label{fig:software_design}](figures/software_design.png)
 
 The user is exposed to initially a minimal API suite, including `generate_mpfit_charge_parameter` and `generate_constrained_mpfit_charge_parameter`, which accept `openff.toolkit.Molecule` objects and return `LibraryChargeParameter` instances with partial charges and composability with subsequent OpenFF workflows (e.g., `openff-interchange`). Transferable charge assignment across different molecules requires automated atom typing via Morgan fingerprints in RDKit, for which a `radius` of bonds beyond an atom determines the unique chemical environment to be matched.
 
