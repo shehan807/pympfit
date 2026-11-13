@@ -54,7 +54,7 @@ CI lint will pass.
 3. Make sure `pre-commit run --all-files` and `pytest pympfit/tests/` pass locally.
 4. Open a pull request against `main`, describing what changed and why.
 
-Please keep pull requests focused — one logical change per PR is the easiest to review.
+Please keep pull requests focused. One logical change per PR is the easiest to review.
 
 ## Reporting issues and getting help
 
