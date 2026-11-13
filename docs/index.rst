@@ -34,8 +34,9 @@ Introduction
 `GitHub <https://github.com/shehan807/pympfit>`_
 
 **PyMPFIT** is a Python implementation of the Multipole Fitting (MPFIT)
-algorithm for deriving partial atomic charges from Gaussian distributed multipole
-moments. **PyMPFIT**, originally a fork of
+algorithm for deriving partial atomic charges from distributed multipole
+moments, computed with either a Gaussian distributed multipole analysis (GDMA)
+or MBIS partitioning. **PyMPFIT**, originally a fork of
 `openff-recharge <https://github.com/openforcefield/openff-recharge>`_, is built
 upon open-source libraries, including
 `OpenFF Recharge <https://github.com/openforcefield/openff-recharge>`_ and
@@ -49,7 +50,8 @@ The framework currently supports:
 * **Generating multi-conformer QC DMA and multipole moment data**
 
   - Directly by interfacing with the `Psi4 <https://psicode.org/>`_ /
-    `GDMA <https://github.com/psi4/gdma>`_ quantum chemical code
+    `GDMA <https://github.com/psi4/gdma>`_ quantum chemical code, or with Psi4's
+    native MBIS partitioning
   - From wavefunctions stored within a
     `QCFractal <https://github.com/MolSSI/QCFractal>`_ instance, including the
     `QCArchive <https://qcarchive.molssi.org/>`_
