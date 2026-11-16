@@ -12,10 +12,10 @@
 
 </div>
 
-PyMPFIT is a free, open-source software for performing partial atomic charge fitting using the Gaussian distributed multipole analysis (GDMA). Features include:
+PyMPFIT is a free, open-source software for performing partial atomic charge fitting to distributed multipoles. The multipoles can come from either the Gaussian distributed multipole analysis (GDMA) or minimal basis iterative stockholder (MBIS) partitioning. Features include:
 
 * Built on open-source libraries: [OpenFF Recharge](https://github.com/openforcefield/openff-recharge), [OpenFF Toolkit](https://github.com/openforcefield/openff-toolkit), and [NumPy](https://numpy.org/)
-* Direct interface to [Psi4](https://psicode.org/) / [GDMA](https://github.com/psi4/gdma) and from wavefunctions stored within [QCFractal](https://github.com/MolSSI/QCFractal) (i.e., [QCArchive](https://qcarchive.molssi.org/))
+* Direct interface to [Psi4](https://psicode.org/) for both [GDMA](https://github.com/psi4/gdma) and native MBIS multipoles, and from wavefunctions stored within [QCFractal](https://github.com/MolSSI/QCFractal) (i.e., [QCArchive](https://qcarchive.molssi.org/))
 * Generating multipole moments for multi-conformer molecules
 * An SQLite database backend for efficient high-throughput scaling
 * Bayesian methods ([Pyro](https://pyro.ai/)) for flexible virtual site fitting
@@ -90,6 +90,29 @@ MPFIT CHARGES        : [ 0.34    0.6064 -0.6405 -0.1101 -0.1218 -0.113  -0.1281 
 ```
 
 See [`examples/tutorials/quickstart.py`](examples/tutorials/quickstart.py) for more.
+
+### MBIS multipoles
+
+MBIS works the same way. Use the MBIS classes in place of the GDMA ones, then either take the raw MBIS charges directly or refit them with MPFIT:
+
+```python
+from pympfit import (
+    MBISSettings, Psi4MBISGenerator, MoleculeMBISRecord, extract_mbis_charges,
+)
+
+mbis_settings = MBISSettings(method="pbe0", basis="def2-SVP")
+coords, multipoles = Psi4MBISGenerator.generate(
+    molecule, conformer, mbis_settings, minimize=True
+)
+record = MoleculeMBISRecord.from_molecule(molecule, coords, multipoles, mbis_settings)
+
+# raw MBIS charges straight from Psi4:
+charges = extract_mbis_charges(record)
+# or refit point charges to the MBIS multipoles:
+charges = generate_mpfit_charge_parameter([record], MPFITSVDSolver())
+```
+
+A runnable version is in [`examples/mbis-charges.py`](examples/mbis-charges.py).
 
 ## License
 

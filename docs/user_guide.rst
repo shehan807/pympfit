@@ -72,6 +72,65 @@ Use ``MoleculeGDMAStore`` to persist GDMA data to a SQLite database.
     # Retrieve records by SMILES
     retrieved = store.retrieve(smiles="[H:1][C:2]([H:3])([H:4])[C:5]([H:6])([H:7])[O:8][H:9]")
 
+MBIS Settings
+-------------
+
+MBIS (minimal basis iterative stockholder) is a second way to get the atomic
+multipoles that MPFIT fits to. It runs natively in Psi4, so it needs nothing beyond
+``psi4`` itself. The ``MBISSettings`` class configures that calculation.
+
+.. code-block:: python
+
+    from pympfit import MBISSettings
+
+    settings = MBISSettings(
+        basis="def2-SVP",     # Basis set
+        method="pbe0",        # QM method
+        max_moment=3,         # Highest moment kept (1=charges, 2=dipoles, 3=quadrupoles)
+    )
+
+Generating MBIS Data and Charges
+--------------------------------
+
+The workflow follows the same shape as GDMA. Run Psi4 to get the multipoles, wrap
+them in a record, then either read the raw MBIS charges or refit them with MPFIT.
+
+.. code-block:: python
+
+    from openff.toolkit import Molecule
+    from openff.recharge.utilities.molecule import extract_conformers
+    from pympfit import (
+        MBISSettings,
+        Psi4MBISGenerator,
+        MoleculeMBISRecord,
+        extract_mbis_charges,
+        generate_mpfit_charge_parameter,
+        MPFITSVDSolver,
+    )
+
+    molecule = Molecule.from_smiles("CCO")
+    molecule.generate_conformers(n_conformers=1)
+    [conformer] = extract_conformers(molecule)
+
+    settings = MBISSettings(basis="def2-SVP", method="pbe0")
+    coords, multipoles = Psi4MBISGenerator.generate(molecule, conformer, settings)
+    record = MoleculeMBISRecord.from_molecule(molecule, coords, multipoles, settings)
+
+    # The raw MBIS charges straight from Psi4:
+    mbis_charges = extract_mbis_charges(record)
+
+    # Or refit point charges to the MBIS multipoles with the same solver:
+    fitted_charges = generate_mpfit_charge_parameter([record], MPFITSVDSolver())
+
+MBIS records persist just like GDMA records, using ``MoleculeMBISStore``:
+
+.. code-block:: python
+
+    from pympfit.mbis.storage import MoleculeMBISStore
+
+    store = MoleculeMBISStore("mbis_data.sqlite")
+    store.store(record)
+
 Solver Options
 --------------
 

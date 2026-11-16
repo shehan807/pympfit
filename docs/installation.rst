@@ -21,6 +21,9 @@ Install
 
    pip install pympfit
 
+MBIS multipoles use Psi4's built-in support, so they need no packages beyond the
+``psi4`` installed above. The GDMA path uses ``pygdma``, which is installed above too.
+
 Optional: Bayesian Virtual Site Fitting
 ---------------------------------------
 
