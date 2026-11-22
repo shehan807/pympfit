@@ -2,10 +2,10 @@
 
 from pympfit.gdma import GDMASettings
 from pympfit.gdma.psi4 import Psi4GDMAGenerator
-from pympfit.gdma.storage import MoleculeGDMARecord
+from pympfit.gdma.storage import MoleculeGDMARecord, MoleculeGDMAStore
 from pympfit.mbis import MBISSettings, extract_mbis_charges
 from pympfit.mbis.psi4 import Psi4MBISGenerator
-from pympfit.mbis.storage import MoleculeMBISRecord
+from pympfit.mbis.storage import MoleculeMBISRecord, MoleculeMBISStore
 from pympfit.mpfit import (
     MultipoleRecord,
     generate_constrained_mpfit_charge_parameter,
@@ -22,7 +22,9 @@ __all__ = [
     "MBISSettings",
     "MPFITSVDSolver",
     "MoleculeGDMARecord",
+    "MoleculeGDMAStore",
     "MoleculeMBISRecord",
+    "MoleculeMBISStore",
     "MultipoleRecord",
     "Psi4GDMAGenerator",
     "Psi4MBISGenerator",
