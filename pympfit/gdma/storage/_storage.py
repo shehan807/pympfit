@@ -26,6 +26,8 @@ from pympfit.gdma.storage.db import (
 )
 from pympfit.gdma.storage.exceptions import IncompatibleDBVersion
 
+__all__ = ["MoleculeGDMARecord", "MoleculeGDMAStore"]
+
 unit.define("AU = [] = au = atomic_unit")
 
 
