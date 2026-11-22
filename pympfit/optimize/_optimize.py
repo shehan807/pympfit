@@ -10,11 +10,8 @@ from openff.recharge.charges.vsite import (
 from openff.recharge.optimize._optimize import Objective, ObjectiveTerm
 from openff.units import unit
 
+from pympfit._records import MultipoleRecord
 from pympfit.gdma.storage import MoleculeGDMARecord
-from pympfit.mbis.storage import MoleculeMBISRecord
-
-# Type alias for records that can be used with MPFIT
-MultipoleRecord = MoleculeGDMARecord | MoleculeMBISRecord
 
 if TYPE_CHECKING:
     import torch

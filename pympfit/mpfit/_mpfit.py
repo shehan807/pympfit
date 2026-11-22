@@ -7,13 +7,10 @@ from openff.recharge.utilities.toolkits import molecule_to_tagged_smiles
 from openff.toolkit.utils.exceptions import AtomMappingWarning
 from openff.units import unit
 
+from pympfit._records import MultipoleRecord
 from pympfit.gdma.storage import MoleculeGDMARecord
-from pympfit.mbis.storage import MoleculeMBISRecord
 from pympfit.mpfit.solvers import MPFITSolver
 from pympfit.optimize import MPFITObjective
-
-# Type alias for records that can be used with MPFIT
-MultipoleRecord = MoleculeGDMARecord | MoleculeMBISRecord
 
 if TYPE_CHECKING:
     from openff.recharge.charges.vsite import VirtualSiteCollection
