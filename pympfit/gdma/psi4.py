@@ -4,7 +4,6 @@ import os
 import subprocess
 from typing import TYPE_CHECKING
 
-import jinja2
 import numpy as np
 from openff.recharge.esp.exceptions import Psi4Error
 from openff.units import Quantity, unit
@@ -75,7 +74,9 @@ class Psi4GDMAGenerator(GDMAGenerator):
             for index, atom in enumerate(molecule.atoms)
         ]
 
-        # Format the jinja template
+        # Format the jinja template (jinja2 is imported lazily; it is only needed here)
+        import jinja2
+
         template_path = get_data_file_path(os.path.join("psi4", "input.dat"), "pympfit")
 
         with open(template_path) as file:
