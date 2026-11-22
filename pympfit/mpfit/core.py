@@ -9,6 +9,9 @@ from scipy.special import sph_harm_y
 if TYPE_CHECKING:
     import torch
 
+# Points closer than this to the origin are treated as sitting at r = 0.
+_ORIGIN_EPS = 1e-10
+
 
 def _convert_flat_to_hierarchical(
     flat_multipoles: NDArray[np.float64], num_sites: int, max_rank: int
@@ -74,7 +77,7 @@ def _regular_solid_harmonic(
 
     r = np.sqrt(x * x + y * y + z * z)
     result = np.zeros_like(r)
-    nonzero = r > 1e-10
+    nonzero = r > _ORIGIN_EPS
 
     if l == 0 and m == 0 and cs == 0:
         result[~nonzero] = 1.0
