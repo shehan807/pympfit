@@ -71,6 +71,11 @@ def _regular_solid_harmonic(
     z: NDArray[np.float64],
 ) -> NDArray[np.float64]:
     """Evaluate regular solid harmonics using scipy."""
+    if l < 0 or not 0 <= m <= l or cs not in (0, 1):
+        raise ValueError(
+            f"invalid solid harmonic indices l={l}, m={m}, cs={cs}: "
+            "require l >= 0, 0 <= m <= l, and cs in (0, 1)"
+        )
     x = np.asarray(x, dtype=np.float64)
     y = np.asarray(y, dtype=np.float64)
     z = np.asarray(z, dtype=np.float64)
@@ -101,6 +106,28 @@ def _regular_solid_harmonic(
     return result
 
 
+def _integration_weights(
+    max_index: int,
+    r_inner: float,
+    r_outer: float,
+    size: int | None = None,
+) -> NDArray[np.float64]:
+    """Radial integration weights ``W[i]`` for ``i = 0..max_index``.
+
+    ``W[i] = (1 / (1 - 2i)) * (r_outer**(1-2i) - r_inner**(1-2i))`` is the
+    analytic radial integral used when projecting point charges onto
+    distributed multipole moments (J. Comp. Chem. 12(8), 913-917, 1991).
+    ``size`` pads the returned array with trailing zeros; it defaults to
+    ``max_index + 1``.
+    """
+    W = np.zeros(max_index + 1 if size is None else size)
+    for i in range(max_index + 1):
+        W[i] = (1.0 / (1.0 - 2.0 * i)) * (
+            r_outer ** (1 - 2 * i) - r_inner ** (1 - 2 * i)
+        )
+    return W
+
+
 def build_A_matrix(
     nsite: int,
     xyzmult: NDArray[np.float64],
@@ -121,9 +148,7 @@ def build_A_matrix(
     dz = xyzcharge[:, 2] - xyzmult[nsite, 2]
 
     # integration factor, W
-    W = np.zeros(maxl + 1)
-    for i in range(maxl + 1):
-        W[i] = (1.0 / (1.0 - 2.0 * i)) * (r2 ** (1 - 2 * i) - r1 ** (1 - 2 * i))
+    W = _integration_weights(maxl, r1, r2)
 
     A[:] = 0.0
     for l in range(maxl + 1):
@@ -153,9 +178,7 @@ def build_b_vector(
     dy = xyzcharge[:, 1] - xyzmult[nsite, 1]
     dz = xyzcharge[:, 2] - xyzmult[nsite, 2]
 
-    W = np.zeros(maxl + 1, dtype=np.float64)
-    for i in range(maxl + 1):
-        W[i] = (1.0 / (1.0 - 2.0 * i)) * (r2 ** (1 - 2 * i) - r1 ** (1 - 2 * i))
+    W = _integration_weights(maxl, r1, r2)
 
     b[:] = 0.0
     for l in range(maxl + 1):

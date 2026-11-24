@@ -321,7 +321,7 @@ class ConstrainedMPFITSolver(abc.ABC):
         -------
             The scalar value of the objective function.
         """
-        from pympfit.mpfit.core import _regular_solid_harmonic
+        from pympfit.mpfit.core import _integration_weights, _regular_solid_harmonic
 
         allcharge, qstore = expandcharge(p0, state)
 
@@ -335,11 +335,7 @@ class ConstrainedMPFITSolver(abc.ABC):
             rminn = state.rvdw[s] + state.r1
 
             lmax_s = int(state.lmax[s])
-            W = np.zeros(maxl + 1)
-            for i in range(lmax_s + 1):
-                W[i] = (1.0 / (1.0 - 2.0 * i)) * (
-                    rmax ** (1 - 2 * i) - rminn ** (1 - 2 * i)
-                )
+            W = _integration_weights(lmax_s, rminn, rmax, size=maxl + 1)
 
             dx = state.xyzcharge[:, 0] - state.xyzmult[s, 0]
             dy = state.xyzcharge[:, 1] - state.xyzmult[s, 1]
@@ -402,7 +398,7 @@ class ConstrainedMPFITSolver(abc.ABC):
         -------
             The gradient in the reduced parameter space with shape=(n_params,).
         """
-        from pympfit.mpfit.core import _regular_solid_harmonic
+        from pympfit.mpfit.core import _integration_weights, _regular_solid_harmonic
 
         allcharge, qstore = expandcharge(p0, state)
 
@@ -417,11 +413,7 @@ class ConstrainedMPFITSolver(abc.ABC):
             rminn = state.rvdw[s] + state.r1
 
             lmax_s = int(state.lmax[s])
-            W = np.zeros(maxl + 1)
-            for i in range(lmax_s + 1):
-                W[i] = (1.0 / (1.0 - 2.0 * i)) * (
-                    rmax ** (1 - 2 * i) - rminn ** (1 - 2 * i)
-                )
+            W = _integration_weights(lmax_s, rminn, rmax, size=maxl + 1)
 
             dx = state.xyzcharge[:, 0] - state.xyzmult[s, 0]
             dy = state.xyzcharge[:, 1] - state.xyzmult[s, 1]
