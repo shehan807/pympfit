@@ -287,3 +287,36 @@ class TestPsi4GDMAGenerator:
             compute_mp=False,
         )
         assert mp is None
+
+
+class TestGDMASettingsValidation:
+    """Validation of GDMASettings fields."""
+
+    def test_valid_radius_accepted(self):
+        from pympfit import GDMASettings
+
+        GDMASettings(radius=["C", 0.65, "N", 0.55, "H", 0.30])
+
+    @pytest.mark.parametrize(
+        "bad_radius",
+        [
+            [0.65, 0.65],  # no element symbols
+            ["C", 0.5, "N"],  # odd length
+            ["C", "N", 0.5, 0.6],  # wrong order
+        ],
+    )
+    def test_malformed_radius_rejected(self, bad_radius):
+        from pydantic import ValidationError
+
+        from pympfit import GDMASettings
+
+        with pytest.raises(ValidationError):
+            GDMASettings(radius=bad_radius)
+
+    def test_inner_must_be_less_than_outer(self):
+        from pydantic import ValidationError
+
+        from pympfit import GDMASettings
+
+        with pytest.raises(ValidationError):
+            GDMASettings(mpfit_inner_radius=12.0, mpfit_outer_radius=6.0)
