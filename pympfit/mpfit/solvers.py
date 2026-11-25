@@ -8,6 +8,8 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.spatial.distance import cdist
 
+from pympfit.exceptions import PympfitError
+
 __all__ = [
     "ConstrainedMPFITSolver",
     "ConstrainedMPFITState",
@@ -18,7 +20,7 @@ __all__ = [
 ]
 
 
-class MPFITSolverError(Exception):
+class MPFITSolverError(PympfitError):
     """An exception raised when an MPFIT solver fails."""
 
 
@@ -493,6 +495,9 @@ class ConstrainedSciPySolver(ConstrainedMPFITSolver):
         )
 
         if not result.success:
-            raise MPFITSolverError(f"Optimization failed: {result.message}")
+            raise MPFITSolverError(
+                f"Optimization failed: {result.message} "
+                f"(status={result.status}, nit={result.nit}, fun={result.fun})"
+            )
 
         return result.x
