@@ -134,6 +134,7 @@ def generate_mpfit_charge_parameter(
     solver: MPFITSolver | None = None,
     vsite_collection: "VirtualSiteCollection | None" = None,
     fit_limit: int | None = None,
+    svd_threshold: float | None = None,
 ) -> LibraryChargeParameter | tuple[LibraryChargeParameter, np.ndarray]:
     """Generate point charges that reproduce the distributed multipole analysis data.
 
@@ -159,6 +160,10 @@ def generate_mpfit_charge_parameter(
         QM/multipole step once at a high rank (e.g., GDMA limit=8 or MBIS
         max_radial_moment=4) and fitting charges at multiple lower ranks
         without rerunning the QM calculation.
+    svd_threshold
+        Convenience shortcut for the default SVD solver's singular-value
+        cutoff. Only valid when ``solver`` is not given; passing both raises
+        ``ValueError``.
 
     Returns
     -------
@@ -170,7 +175,14 @@ def generate_mpfit_charge_parameter(
 
     from pympfit.mpfit.solvers import MPFITSVDSolver
 
-    solver = MPFITSVDSolver() if solver is None else solver
+    if solver is not None and svd_threshold is not None:
+        raise ValueError("provide either `solver` or `svd_threshold`, not both")
+    if solver is None:
+        solver = (
+            MPFITSVDSolver()
+            if svd_threshold is None
+            else MPFITSVDSolver(svd_threshold=svd_threshold)
+        )
 
     # Ensure all records are for the same molecule
     unique_smiles = {
