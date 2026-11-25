@@ -3,7 +3,7 @@ import os
 from typing import TYPE_CHECKING, Literal
 
 from openff.units import Quantity, unit
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 if TYPE_CHECKING:
     from openff.toolkit import Molecule
@@ -71,6 +71,36 @@ class GDMASettings(BaseModel):
         ),
     )
 
+    @field_validator("radius")
+    @classmethod
+    def _validate_radius(cls, value: list) -> list:
+        """Require ``radius`` to be an interleaved [element, value, ...] list."""
+        if len(value) % 2 != 0:
+            raise ValueError(
+                "radius must be an interleaved [element, value, ...] list of even "
+                f"length, got {len(value)} items"
+            )
+        for i, item in enumerate(value):
+            if i % 2 == 0 and not isinstance(item, str):
+                raise ValueError(
+                    f"radius[{i}] should be an element symbol (str), got {item!r}"
+                )
+            if i % 2 == 1 and not isinstance(item, int | float):
+                raise ValueError(
+                    f"radius[{i}] should be a radius value (number), got {item!r}"
+                )
+        return value
+
+    @model_validator(mode="after")
+    def _validate_mpfit_radii(self) -> "GDMASettings":
+        """Require the inner integration radius to be smaller than the outer one."""
+        if self.mpfit_inner_radius >= self.mpfit_outer_radius:
+            raise ValueError(
+                f"mpfit_inner_radius ({self.mpfit_inner_radius}) must be less than "
+                f"mpfit_outer_radius ({self.mpfit_outer_radius})"
+            )
+        return self
+
 
 class GDMAGenerator(abc.ABC):
     """Base class for generating electrostatic potential of a molecule on a grid."""
@@ -82,7 +112,7 @@ class GDMAGenerator(abc.ABC):
         molecule: "Molecule",
         conformer: Quantity,
         settings: GDMASettings,
-        directory: str,
+        directory: str | None,
         minimize: bool,
         compute_mp: bool,
         n_threads: int,
@@ -124,7 +154,7 @@ class GDMAGenerator(abc.ABC):
         molecule: "Molecule",
         conformer: Quantity,
         settings: GDMASettings,
-        directory: str = None,
+        directory: str | None = None,
         minimize: bool = False,
         compute_mp: bool = True,
         n_threads: int = 1,
