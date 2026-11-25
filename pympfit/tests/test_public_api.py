@@ -2,6 +2,8 @@
 
 import typing
 
+import pytest
+
 import pympfit
 
 
@@ -40,3 +42,19 @@ def test_multipole_record_unions_gdma_and_mbis():
 
     members = set(typing.get_args(pympfit.MultipoleRecord))
     assert members == {MoleculeGDMARecord, MoleculeMBISRecord}
+
+
+def test_mpfit_solver_error_subclasses_pympfit_error():
+    """MPFITSolverError shares the pympfit error root."""
+    from pympfit.exceptions import PympfitError
+    from pympfit.mpfit.solvers import MPFITSolverError
+
+    assert issubclass(MPFITSolverError, PympfitError)
+
+
+def test_generate_mpfit_rejects_solver_and_threshold_together():
+    """svd_threshold is a shortcut for the default solver, not an override."""
+    from pympfit import MPFITSVDSolver, generate_mpfit_charge_parameter
+
+    with pytest.raises(ValueError, match="either"):
+        generate_mpfit_charge_parameter([], solver=MPFITSVDSolver(), svd_threshold=1e-4)
