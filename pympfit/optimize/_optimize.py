@@ -75,7 +75,9 @@ class MPFITObjectiveTerm(ObjectiveTerm):
         except ImportError:
             raise ImportError(
                 "predict() requires PyTorch for differentiable inference. "
-                "Install with: pip install torch sphericart[torch]"
+                "Install the optional Bayesian/virtual-site dependencies: "
+                "pip install torch sphericart-torch (see the installation docs: "
+                "https://pympfit.readthedocs.io/en/latest/installation.html)."
             ) from None
 
         from openff.recharge.charges.vsite import VirtualSiteGenerator
@@ -205,7 +207,8 @@ class MPFITObjectiveTerm(ObjectiveTerm):
         except ImportError:
             raise ImportError(
                 "predict_from_free_charges() requires PyTorch. "
-                "Install with: pip install torch"
+                "Install it with: pip install torch (see the installation docs: "
+                "https://pympfit.readthedocs.io/en/latest/installation.html)."
             ) from None
 
         last_charge = formal_charge - free_charges.sum(dim=0, keepdim=True)
